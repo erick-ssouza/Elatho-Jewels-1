@@ -1,14 +1,18 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { createOrderSchema } from "@shared/schema";
+import { createOrderSchema, insertProductSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { z } from "zod";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
+  // Seed products on startup
+  await storage.seedProducts();
+
   // Get all products
   app.get("/api/products", async (_req, res) => {
     try {
@@ -52,6 +56,77 @@ export async function registerRoutes(
     }
   });
 
+  // Create product (admin)
+  app.post("/api/products", async (req, res) => {
+    try {
+      const result = insertProductSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationError = fromZodError(result.error);
+        return res.status(400).json({ error: validationError.message });
+      }
+
+      const productData = {
+        ...result.data,
+        variations: result.data.variations ?? [],
+      };
+      const product = await storage.createProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Error creating product:", error);
+      res.status(500).json({ error: "Failed to create product" });
+    }
+  });
+
+  // Update product (admin)
+  app.patch("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
+      const result = insertProductSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        const validationError = fromZodError(result.error);
+        return res.status(400).json({ error: validationError.message });
+      }
+
+      const updateData: Record<string, unknown> = { ...result.data };
+      if (result.data.variations !== undefined) {
+        updateData.variations = result.data.variations;
+      }
+      const product = await storage.updateProduct(id, updateData as Parameters<typeof storage.updateProduct>[1]);
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      res.json(product);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.status(500).json({ error: "Failed to update product" });
+    }
+  });
+
+  // Delete product (admin)
+  app.delete("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
+      const deleted = await storage.deleteProduct(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(500).json({ error: "Failed to delete product" });
+    }
+  });
+
   // Get all orders
   app.get("/api/orders", async (_req, res) => {
     try {
@@ -78,6 +153,36 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error creating order:", error);
       res.status(500).json({ error: "Failed to create order" });
+    }
+  });
+
+  // Update order status (admin)
+  app.patch("/api/orders/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid order ID" });
+      }
+
+      const statusSchema = z.object({
+        status: z.enum(["pending", "processing", "shipped", "delivered"]),
+      });
+      
+      const result = statusSchema.safeParse(req.body);
+      if (!result.success) {
+        const validationError = fromZodError(result.error);
+        return res.status(400).json({ error: validationError.message });
+      }
+
+      const order = await storage.updateOrderStatus(id, result.data.status);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      res.json(order);
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      res.status(500).json({ error: "Failed to update order status" });
     }
   });
 
