@@ -1,0 +1,83 @@
+Crie um e-commerce completo de joias chamado "Elatho Jewels" usando React + TypeScript + Vite + Express.
+
+ESTRUTURA:
+- Frontend React em /client
+- Backend Express em /server
+- TailwindCSS para estilização
+- lucide-react para ícones
+- react-router-dom para rotas
+
+PÁGINAS OBRIGATÓRIAS:
+
+1. HOME (/)
+   - Hero com logo Elatho
+   - Grid de produtos (3 colunas)
+   - Filtro por categoria
+   - ProductCard: imagem, nome, preço, botão ver detalhes
+
+2. PRODUTO (/produto/:id)
+   - Imagem grande
+   - Descrição completa
+   - Seletor de variação (Dourado/Prateado/Rosé)
+   - Quantidade
+   - Botão adicionar ao carrinho
+
+3. CARRINHO (/carrinho)
+   - Lista produtos
+   - Editar quantidade
+   - Remover item
+   - Total
+   - Botão finalizar compra
+
+4. CHECKOUT (/checkout) - 3 ETAPAS:
+   Etapa 1: Nome, WhatsApp, Email
+   Etapa 2: CEP (buscar via ViaCEP), Endereço, Frete (PAC R$15 / SEDEX R$25)
+   Etapa 3: Pagamento (PIX 5% desconto / Crédito / Débito)
+   Ao finalizar: enviar para WhatsApp e redirecionar para /sucesso
+
+5. SUCESSO (/sucesso)
+   - Mensagem de confirmação
+   - Botão voltar e WhatsApp
+
+6. ADMIN (/painel-elatho-2025)
+   - Login senha: "Elatho@2025!Admin"
+   - Dashboard: cards de estatísticas
+   - Aba Produtos: listagem
+   - Aba Pedidos: listagem com filtros
+
+CARTCONTEXT:
+- Gerenciar carrinho (add, remove, quantity, total)
+- Persistir em localStorage
+- Provider envolvendo App
+
+PRODUTOS (criar 12):
+1. Colar Lua Crescente - R$289.90 - Colares
+2. Brincos Estrela - R$149.90 - Brincos
+3. Anel Solitário - R$228.00 - Anéis
+4. Pulseira Chain Gold - R$179.90 - Pulseiras
+5. Colar Double Layer - R$289.90 - Colares
+6. Brincos Pearl Drop - R$219.90 - Brincos
+7. Anel Duo Stone - R$199.90 - Anéis
+8. Pulseira Infinity - R$159.90 - Pulseiras
+9. Colar Celestial - R$319.90 - Colares
+10. Brincos Minimalist - R$129.90 - Brincos
+11. Anel Crown - R$249.90 - Anéis
+12. Pulseira Delicate - R$139.90 - Pulseiras
+
+WHATSAPP:
+Número: 5511999999999
+Mensagem formatada com todos dados do pedido
+
+DESIGN:
+- Cores: Pink #ec4899, Purple #a855f7, Gold #fbbf24
+- Responsivo mobile-first
+- Navbar fixa com logo e carrinho
+
+API:
+- GET /api/products
+- GET /api/products/:id
+- GET /api/products/category/:category
+
+PORT: 5000
+Inicie servidor automaticamente.
+Crie TODOS os arquivos completos e funcionais.
