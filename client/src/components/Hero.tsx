@@ -1,7 +1,6 @@
 // 🎨 HERO - TONS SUAVES
 // Arquivo: client/src/components/Hero.tsx
 
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 
@@ -48,26 +47,20 @@ export function Hero() {
           Descubra nossa coleção exclusiva de semijoias com design sofisticado e acabamento premium
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/#produtos">
-            <Button
-              size="lg"
-              className="bg-white text-pink-600 hover:bg-pink-50 font-semibold px-8"
-              data-testid="button-hero-shop"
-            >
-              Ver Coleção
-            </Button>
-          </Link>
-          <Link href="/?categoria=Colares">
-            <Button
-              size="lg"
-              variant="outline"
-              className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20"
-              data-testid="button-hero-colares"
-            >
-              Explorar Colares
-            </Button>
-          </Link>
+        <div className="flex justify-center">
+          <Button
+            size="lg"
+            className="bg-white text-pink-600 hover:bg-pink-50 font-semibold px-8"
+            data-testid="button-hero-shop"
+            onClick={() => {
+              const element = document.getElementById('produtos');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            Ver Coleção
+          </Button>
         </div>
 
         <div className="mt-12 flex items-center justify-center gap-8 text-white/70 text-sm">
