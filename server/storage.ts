@@ -472,7 +472,7 @@ export class DatabaseStorage implements IStorage {
       whatsapp: row.whatsapp,
       subject: row.subject,
       message: row.message,
-      read: row.read === "true",
+      read: row.read,
       createdAt: row.createdAt,
     }));
   }
@@ -486,7 +486,7 @@ export class DatabaseStorage implements IStorage {
       whatsapp: row.whatsapp,
       subject: row.subject,
       message: row.message,
-      read: row.read === "true",
+      read: row.read,
       createdAt: row.createdAt,
     };
   }
@@ -494,7 +494,7 @@ export class DatabaseStorage implements IStorage {
   async markMessageAsRead(id: number): Promise<Message | undefined> {
     const [row] = await db
       .update(messages)
-      .set({ read: "true" })
+      .set({ read: true })
       .where(eq(messages.id, id))
       .returning();
     if (!row) return undefined;
@@ -505,7 +505,7 @@ export class DatabaseStorage implements IStorage {
       whatsapp: row.whatsapp,
       subject: row.subject,
       message: row.message,
-      read: row.read === "true",
+      read: row.read,
       createdAt: row.createdAt,
     };
   }

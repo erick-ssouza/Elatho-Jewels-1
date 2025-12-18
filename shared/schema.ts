@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text, numeric, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, text, numeric, jsonb, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -201,7 +201,7 @@ export const messages = pgTable("messages", {
   whatsapp: varchar("whatsapp", { length: 20 }).notNull(),
   subject: varchar("subject", { length: 255 }).notNull(),
   message: text("message").notNull(),
-  read: varchar("read", { length: 10 }).notNull().default("false"),
+  read: boolean("read").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
