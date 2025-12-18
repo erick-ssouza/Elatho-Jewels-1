@@ -362,7 +362,7 @@ export async function registerRoutes(
     }
   });
 
-  // Contact form
+  // Contact form - saves to database
   app.post("/api/contact", async (req, res) => {
     try {
       const { name, email, whatsapp, subject, message } = req.body;
@@ -371,12 +371,58 @@ export async function registerRoutes(
         return res.status(400).json({ error: "All fields are required" });
       }
 
-      console.log("Contact form submission:", { name, email, whatsapp, subject, message });
+      const savedMessage = await storage.createMessage({ name, email, whatsapp, subject, message });
+      console.log("Contact form saved:", savedMessage.id);
 
-      res.json({ success: true, message: "Contact form received" });
+      res.json({ success: true, message: "Contact form received", id: savedMessage.id });
     } catch (error) {
       console.error("Error processing contact form:", error);
       res.status(500).json({ error: "Failed to process contact form" });
+    }
+  });
+
+  // Admin messages routes
+  app.get("/api/admin/messages", requireAdmin, async (_req, res) => {
+    try {
+      const messagesList = await storage.getAllMessages();
+      res.json(messagesList);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.patch("/api/admin/messages/:id/read", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid message ID" });
+      }
+      const updated = await storage.markMessageAsRead(id);
+      if (!updated) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      res.status(500).json({ error: "Failed to update message" });
+    }
+  });
+
+  app.delete("/api/admin/messages/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid message ID" });
+      }
+      const deleted = await storage.deleteMessage(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Message not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      res.status(500).json({ error: "Failed to delete message" });
     }
   });
 

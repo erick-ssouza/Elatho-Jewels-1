@@ -192,3 +192,30 @@ export interface Testimonial {
   adminResponse: string | null;
   adminResponseDate: Date | null;
 }
+
+// Contact Messages Table
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  whatsapp: varchar("whatsapp", { length: 20 }).notNull(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  read: varchar("read", { length: 10 }).notNull().default("false"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true, read: true });
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type MessageRow = typeof messages.$inferSelect;
+
+export interface Message {
+  id: number;
+  name: string;
+  email: string;
+  whatsapp: string;
+  subject: string;
+  message: string;
+  read: boolean;
+  createdAt: Date;
+}

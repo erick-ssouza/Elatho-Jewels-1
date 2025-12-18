@@ -27,6 +27,7 @@ import type {
   AdminStats,
   User,
   Testimonial,
+  Message,
 } from "@shared/schema";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export default function Admin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "produtos" | "pedidos" | "clientes" | "depoimentos"
+    "dashboard" | "produtos" | "pedidos" | "clientes" | "depoimentos" | "mensagens"
   >("dashboard");
   const [responseInputs, setResponseInputs] = useState<Record<number, string>>(
     {},
@@ -127,6 +128,12 @@ export default function Admin() {
   const { data: testimonialsList = [], isLoading: testimonialsLoading } =
     useQuery<Testimonial[]>({
       queryKey: ["/api/testimonials"],
+      enabled: authenticated,
+    });
+
+  const { data: messagesList = [], isLoading: messagesLoading } =
+    useQuery<Message[]>({
+      queryKey: ["/api/admin/messages"],
       enabled: authenticated,
     });
 
@@ -446,8 +453,30 @@ export default function Admin() {
     );
   }
 
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/messages/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/messages"] });
+      toast({ title: "Mensagem excluída com sucesso" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao excluir mensagem", variant: "destructive" });
+    },
+  });
+
+  const markMessageReadMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("PATCH", `/api/admin/messages/${id}/read`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/messages"] });
+    },
+  });
+
   const isLoading =
-    productsLoading || ordersLoading || customersLoading || testimonialsLoading;
+    productsLoading || ordersLoading || customersLoading || testimonialsLoading || messagesLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -481,6 +510,7 @@ export default function Admin() {
                 "pedidos",
                 "clientes",
                 "depoimentos",
+                "mensagens",
               ] as const
             ).map((tab) => (
               <button
@@ -698,8 +728,299 @@ export default function Admin() {
               </div>
             )}
 
-            {/* RESTO DAS TABS (pedidos, clientes, depoimentos) CONTINUAM IGUAIS... */}
-            {/* (Código muito longo, mas você já tem no seu arquivo) */}
+            {activeTab === "pedidos" && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <h2 className="text-2xl font-bold">Gerenciar Pedidos</h2>
+                  <div className="flex gap-3 flex-wrap">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        placeholder="Buscar pedido..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-64"
+                        data-testid="input-search-orders"
+                      />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-40" data-testid="select-status-filter">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="processing">Processando</SelectItem>
+                        <SelectItem value="shipped">Enviado</SelectItem>
+                        <SelectItem value="delivered">Entregue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {orders.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      Nenhum pedido encontrado
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {orders
+                      .filter((order) => {
+                        const matchSearch = order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          order.id.toString().includes(searchTerm);
+                        const matchStatus = statusFilter === "todos" || order.status === statusFilter;
+                        return matchSearch && matchStatus;
+                      })
+                      .map((order) => (
+                        <Card key={order.id} data-testid={`card-order-${order.id}`}>
+                          <CardContent className="p-6">
+                            <div className="flex flex-wrap items-start justify-between gap-4">
+                              <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h3 className="font-semibold">Pedido #{order.id}</h3>
+                                  <Badge className={statusColors[order.status] || "bg-gray-100 text-gray-800"}>
+                                    {statusLabels[order.status] || order.status}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {order.customer.name} - {order.customer.whatsapp}
+                                </p>
+                                <p className="text-sm text-muted-foreground">{formatDate(order.createdAt)}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-pink-600">{formatPrice(order.total)}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {order.items.length} item(s)
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t flex flex-wrap items-center gap-3">
+                              <Select
+                                value={order.status}
+                                onValueChange={(value) => updateStatusMutation.mutate({ id: order.id, status: value })}
+                              >
+                                <SelectTrigger className="w-40" data-testid={`select-order-status-${order.id}`}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Pendente</SelectItem>
+                                  <SelectItem value="processing">Processando</SelectItem>
+                                  <SelectItem value="shipped">Enviado</SelectItem>
+                                  <SelectItem value="delivered">Entregue</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteOrderMutation.mutate(order.id)}
+                                data-testid={`button-delete-order-${order.id}`}
+                              >
+                                <Trash2 className="w-4 h-4 mr-1" />
+                                Excluir
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "clientes" && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold">Clientes Cadastrados</h2>
+                {customers.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      Nenhum cliente cadastrado
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {customers.map((customer) => (
+                      <Card key={customer.id} data-testid={`card-customer-${customer.id}`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <h3 className="font-semibold">{customer.name}</h3>
+                              <p className="text-sm text-muted-foreground">{customer.email}</p>
+                              {customer.whatsapp && (
+                                <p className="text-sm text-muted-foreground">{customer.whatsapp}</p>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteCustomerMutation.mutate(customer.id)}
+                              data-testid={`button-delete-customer-${customer.id}`}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "depoimentos" && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold">Depoimentos de Clientes</h2>
+                {testimonialsList.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      Nenhum depoimento ainda
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {testimonialsList.map((testimonial) => (
+                      <Card key={testimonial.id} data-testid={`card-testimonial-${testimonial.id}`}>
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold">{testimonial.name}</h3>
+                                <div className="flex">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-4 h-4 ${i < testimonial.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-muted-foreground mb-4">{testimonial.text}</p>
+                              {testimonial.adminResponse && (
+                                <div className="bg-pink-50 p-3 rounded-lg">
+                                  <p className="text-sm font-medium text-pink-800">Resposta da Elatho:</p>
+                                  <p className="text-sm text-pink-700">{testimonial.adminResponse}</p>
+                                </div>
+                              )}
+                              {!testimonial.adminResponse && (
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="Escrever resposta..."
+                                    value={responseInputs[testimonial.id] || ""}
+                                    onChange={(e) => setResponseInputs({ ...responseInputs, [testimonial.id]: e.target.value })}
+                                    className="flex-1"
+                                    data-testid={`input-response-${testimonial.id}`}
+                                  />
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      if (responseInputs[testimonial.id]) {
+                                        respondTestimonialMutation.mutate({
+                                          id: testimonial.id,
+                                          response: responseInputs[testimonial.id],
+                                        });
+                                        setResponseInputs({ ...responseInputs, [testimonial.id]: "" });
+                                      }
+                                    }}
+                                    data-testid={`button-send-response-${testimonial.id}`}
+                                  >
+                                    <Send className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteTestimonialMutation.mutate(testimonial.id)}
+                              data-testid={`button-delete-testimonial-${testimonial.id}`}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === "mensagens" && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-2xl font-bold">Mensagens do Fale Conosco</h2>
+                  <Badge variant="secondary">
+                    {messagesList.filter((m) => !m.read).length} não lidas
+                  </Badge>
+                </div>
+                {messagesList.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      Nenhuma mensagem recebida
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {messagesList.map((msg) => (
+                      <Card
+                        key={msg.id}
+                        className={!msg.read ? "border-pink-300 bg-pink-50/50" : ""}
+                        data-testid={`card-message-${msg.id}`}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="font-semibold">{msg.name}</h3>
+                                {!msg.read && (
+                                  <Badge className="bg-pink-600 text-white">Nova</Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-1">
+                                <strong>Email:</strong> {msg.email}
+                              </p>
+                              <p className="text-sm text-muted-foreground mb-1">
+                                <strong>WhatsApp:</strong> {msg.whatsapp}
+                              </p>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                <strong>Assunto:</strong> {msg.subject}
+                              </p>
+                              <div className="bg-muted p-3 rounded-lg">
+                                <p className="text-sm">{msg.message}</p>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Recebido em: {formatDate(msg.createdAt)}
+                              </p>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              {!msg.read && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => markMessageReadMutation.mutate(msg.id)}
+                                  data-testid={`button-mark-read-${msg.id}`}
+                                >
+                                  Marcar lida
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteMessageMutation.mutate(msg.id)}
+                                data-testid={`button-delete-message-${msg.id}`}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
           </>
         )}

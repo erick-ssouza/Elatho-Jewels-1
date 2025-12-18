@@ -26,29 +26,21 @@ export default function Contact() {
     setIsSubmitting(true);
 
     try {
-      // Log no backend e mostrar sucesso
-      await fetch("/api/contact", {
+      const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form)
       });
 
-      // Gerar mailto como fallback
-      const mailtoSubject = encodeURIComponent(`[Elatho Semijoias] ${form.subject}`);
-      const mailtoBody = encodeURIComponent(
-        `Nome: ${form.name}\nEmail: ${form.email}\nWhatsApp: ${form.whatsapp}\n\nMensagem:\n${form.message}`
-      );
-      const mailtoLink = `mailto:elathosemijoias@gmail.com?subject=${mailtoSubject}&body=${mailtoBody}`;
-
-      toast({
-        title: "Mensagem enviada!",
-        description: "Entraremos em contato em breve."
-      });
-
-      // Abrir cliente de email como backup
-      window.location.href = mailtoLink;
-
-      setForm({ name: "", email: "", whatsapp: "", subject: "", message: "" });
+      if (response.ok) {
+        toast({
+          title: "Mensagem enviada!",
+          description: "Recebemos sua mensagem e entraremos em contato em breve."
+        });
+        setForm({ name: "", email: "", whatsapp: "", subject: "", message: "" });
+      } else {
+        throw new Error("Failed to send");
+      }
     } catch {
       toast({
         title: "Erro ao enviar",

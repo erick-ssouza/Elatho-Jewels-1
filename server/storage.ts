@@ -3,6 +3,7 @@ import {
   orders,
   users,
   testimonials,
+  messages,
   type Product,
   type Order,
   type CreateOrder,
@@ -11,6 +12,8 @@ import {
   type InsertUser,
   type Testimonial,
   type InsertTestimonial,
+  type Message,
+  type InsertMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, sum, sql } from "drizzle-orm";
@@ -61,6 +64,11 @@ export interface IStorage {
   createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
   updateTestimonialResponse(id: number, response: string): Promise<Testimonial | undefined>;
   deleteTestimonial(id: number): Promise<boolean>;
+
+  getAllMessages(): Promise<Message[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  markMessageAsRead(id: number): Promise<Message | undefined>;
+  deleteMessage(id: number): Promise<boolean>;
 
   getAdminStats(): Promise<AdminStats>;
   seedProducts(): Promise<void>;
@@ -453,6 +461,58 @@ export class DatabaseStorage implements IStorage {
     ];
 
     await db.insert(testimonials).values(initialTestimonials);
+  }
+
+  async getAllMessages(): Promise<Message[]> {
+    const result = await db.select().from(messages).orderBy(desc(messages.createdAt));
+    return result.map((row) => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      whatsapp: row.whatsapp,
+      subject: row.subject,
+      message: row.message,
+      read: row.read === "true",
+      createdAt: row.createdAt,
+    }));
+  }
+
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const [row] = await db.insert(messages).values(insertMessage).returning();
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      whatsapp: row.whatsapp,
+      subject: row.subject,
+      message: row.message,
+      read: row.read === "true",
+      createdAt: row.createdAt,
+    };
+  }
+
+  async markMessageAsRead(id: number): Promise<Message | undefined> {
+    const [row] = await db
+      .update(messages)
+      .set({ read: "true" })
+      .where(eq(messages.id, id))
+      .returning();
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      whatsapp: row.whatsapp,
+      subject: row.subject,
+      message: row.message,
+      read: row.read === "true",
+      createdAt: row.createdAt,
+    };
+  }
+
+  async deleteMessage(id: number): Promise<boolean> {
+    const result = await db.delete(messages).where(eq(messages.id, id)).returning();
+    return result.length > 0;
   }
 }
 
