@@ -90,7 +90,10 @@ export default function Checkout() {
   };
 
   const subtotal = getTotal();
-  const shippingCost = shippingOptions.find((s) => s.method === shippingMethod)?.price || 0;
+  const baseShippingCost = shippingOptions.find((s) => s.method === shippingMethod)?.price || 0;
+  // Frete grátis para compras acima de R$ 299
+  const shippingCost = subtotal >= 299 ? 0 : baseShippingCost;
+  const isFreeShipping = subtotal >= 299;
   const paymentDiscount = paymentOptions.find((p) => p.method === paymentMethod)?.discount || 0;
   const discountAmount = subtotal * paymentDiscount;
   const total = subtotal + shippingCost - discountAmount;
@@ -139,56 +142,28 @@ export default function Checkout() {
     setStep(3);
   };
 
-  const processPayment = async (paymentData: any) => {
-    // ============================================
-    // 🔧 AQUI VOCÊ INTEGRA SEU GATEWAY DE PAGAMENTO
-    // ============================================
-
-    // EXEMPLO COM MERCADO PAGO:
-    /*
-    const mp = new MercadoPago('YOUR_PUBLIC_KEY');
-    const cardForm = mp.cardForm({
-      amount: total.toString(),
-      autoMount: true,
-      form: {
-        id: "payment-form",
-        cardholderName: { id: "cardholderName" },
-        cardNumber: { id: "cardNumber" },
-        expirationDate: { id: "expirationDate" },
-        securityCode: { id: "securityCode" },
-      },
-    });
-    */
-
-    // EXEMPLO COM PAGSEGURO:
-    /*
-    const response = await fetch('https://api.pagseguro.com/charges', {
+  const processPaymentWithMercadoPago = async () => {
+    // Chamar a rota do Mercado Pago no backend
+    const response = await fetch('/api/criar-pagamento', {
       method: 'POST',
-      headers: {
-        'Authorization': 'Bearer YOUR_TOKEN',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(paymentData)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        itens: items.map(item => ({
+          id: item.productId.toString(),
+          nome: item.name,
+          quantidade: item.quantity,
+          preco: item.price
+        })),
+        frete: shippingCost
+      })
     });
-    */
 
-    // POR ENQUANTO, SIMULAR PAGAMENTO BEM-SUCEDIDO:
-    if (paymentMethod === "PIX") {
-      // Gerar QR Code PIX (integrar com seu gateway)
-      return {
-        success: true,
-        paymentId: `PIX-${Date.now()}`,
-        qrCode: "00020126580014br.gov.bcb.pix...", // QR Code real virá do gateway
-        pixCopiaECola: "00020126580014br.gov.bcb.pix..." // Código copia e cola
-      };
-    } else {
-      // Cartão de crédito/débito (processar com gateway)
-      return {
-        success: true,
-        paymentId: `CARD-${Date.now()}`,
-        status: "approved"
-      };
+    if (!response.ok) {
+      throw new Error('Erro ao criar pagamento');
     }
+
+    const data = await response.json();
+    return data.link; // URL do Mercado Pago
   };
 
   const handleStep3Submit = async (data: Step3Data) => {
@@ -216,7 +191,7 @@ export default function Checkout() {
           total: finalTotal,
         },
         items,
-        status: "pending_payment", // Status inicial
+        status: "pending_payment",
       };
 
       // Salvar pedido e obter ID
@@ -224,33 +199,14 @@ export default function Checkout() {
       const newOrderId = orderResponse.id || `PED-${Date.now()}`;
       setOrderId(newOrderId);
 
-      // Processar pagamento
-      const paymentResult = await processPayment({
-        amount: finalTotal,
-        paymentMethod: data.paymentMethod,
-        orderId: newOrderId,
-        customer: customerInfo,
-      });
+      // Redirecionar para Mercado Pago (cartão/PIX)
+      const mercadoPagoLink = await processPaymentWithMercadoPago();
 
-      if (paymentResult.success) {
-        // Atualizar status do pedido
-        await apiRequest("PATCH", `/api/orders/${newOrderId}`, {
-          status: "payment_approved",
-          paymentId: paymentResult.paymentId,
-          trackingCode: null, // Será preenchido quando enviar
-        });
-
-        toast({
-          title: "Pagamento aprovado!",
-          description: "Seu pedido foi confirmado com sucesso.",
-        });
-
-        clearCart();
-
-        // Redirecionar para página de sucesso com ID do pedido
-        setLocation(`/sucesso?pedido=${newOrderId}`);
+      if (mercadoPagoLink) {
+        // Redirecionar para página de pagamento do Mercado Pago
+        window.location.href = mercadoPagoLink;
       } else {
-        throw new Error("Pagamento não aprovado");
+        throw new Error("Link de pagamento não gerado");
       }
 
     } catch (error) {
@@ -265,45 +221,88 @@ export default function Checkout() {
     }
   };
 
-  // Função para enviar resumo via WhatsApp (OPCIONAL)
-  const sendWhatsAppNotification = () => {
-    if (!customerInfo || !addressInfo || !orderId) return;
+  // Função para finalizar pedido via WhatsApp
+  const handleWhatsAppCheckout = async () => {
+    if (!customerInfo || !addressInfo) return;
 
-    const whatsappNumber = "5519998229202"; // ← TROCAR PELO SEU NÚMERO
+    const whatsappNumber = "5519998229202";
+    const newOrderId = `PED-${Date.now()}`;
 
     const selectedPayment = paymentOptions.find((p) => p.method === paymentMethod);
     const actualDiscount = subtotal * (selectedPayment?.discount || 0);
     const finalTotal = subtotal + shippingCost - actualDiscount;
 
-    const orderText = `
-*🎉 PEDIDO CONFIRMADO - ELATHO SEMIJOIAS*
+    // Salvar pedido no backend
+    try {
+      const orderData = {
+        customer: customerInfo,
+        address: addressInfo,
+        shipping: {
+          method: shippingMethod,
+          cost: shippingCost,
+        },
+        payment: {
+          method: paymentMethod,
+          discount: actualDiscount,
+          total: finalTotal,
+        },
+        items,
+        status: "pending_payment",
+      };
 
-*Número do Pedido:* ${orderId}
+      await apiRequest("POST", "/api/orders", orderData);
+    } catch (error) {
+      console.error("Erro ao salvar pedido:", error);
+    }
 
-*Cliente:*
-Nome: ${customerInfo.name}
-WhatsApp: ${customerInfo.whatsapp}
-Email: ${customerInfo.email}
+    const itemsList = items.map((item) => `${item.name} x${item.quantity} - ${formatPrice(item.price * item.quantity)}`).join("\n");
 
-*Endereço de Entrega:*
+    const orderText = `Olá! Gostaria de finalizar o Pedido #${newOrderId}.
+
+*Cliente:* ${customerInfo.name}
+*WhatsApp:* ${customerInfo.whatsapp}
+*Email:* ${customerInfo.email}
+
+*Endereço:*
 ${addressInfo.street}, ${addressInfo.number}
-${addressInfo.complement ? addressInfo.complement + "\n" : ""}${addressInfo.neighborhood}
+${addressInfo.complement ? addressInfo.complement + ", " : ""}${addressInfo.neighborhood}
 ${addressInfo.city} - ${addressInfo.state}
 CEP: ${addressInfo.cep}
 
-*Produtos:*
-${items.map((item) => `- ${item.name} (${item.variation}) x${item.quantity} = ${formatPrice(item.price * item.quantity)}`).join("\n")}
+*Itens:*
+${itemsList}
 
-*Frete:* ${shippingMethod} - ${formatPrice(shippingCost)}
-*Pagamento:* ${paymentMethod}${actualDiscount > 0 ? ` (Desconto PIX: ${formatPrice(actualDiscount)})` : ""}
+*Subtotal:* ${formatPrice(subtotal)}
+*Frete:* ${isFreeShipping ? "Grátis" : formatPrice(shippingCost)} (${shippingMethod})
+${actualDiscount > 0 ? `*Desconto PIX:* -${formatPrice(actualDiscount)}\n` : ""}*Valor Total:* ${formatPrice(finalTotal)}
 
-*TOTAL PAGO: ${formatPrice(finalTotal)}*
+*Forma de Pagamento:* ${paymentMethod}`;
 
-*Status:* Pagamento confirmado ✅
-*Código de Rastreio:* Será enviado em até 24h
+    const encodedMessage = encodeURIComponent(orderText);
+    
+    clearCart();
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, "_blank");
+    setLocation(`/sucesso?pedido=${newOrderId}`);
+  };
 
-_Para acompanhar seu pedido, acesse: https://rastreamento.correios.com.br_
-    `.trim();
+  // Função para enviar resumo via WhatsApp (após pedido criado)
+  const sendWhatsAppNotification = () => {
+    if (!customerInfo || !addressInfo || !orderId) return;
+
+    const whatsappNumber = "5519998229202";
+
+    const selectedPayment = paymentOptions.find((p) => p.method === paymentMethod);
+    const actualDiscount = subtotal * (selectedPayment?.discount || 0);
+    const finalTotal = subtotal + shippingCost - actualDiscount;
+
+    const orderText = `Olá! Gostaria de finalizar o Pedido #${orderId}.
+
+*Cliente:* ${customerInfo.name}
+
+*Itens:*
+${items.map((item) => `- ${item.name} x${item.quantity} = ${formatPrice(item.price * item.quantity)}`).join("\n")}
+
+*Valor Total:* ${formatPrice(finalTotal)}`;
 
     const encodedMessage = encodeURIComponent(orderText);
     window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, "_blank");
@@ -563,11 +562,22 @@ _Para acompanhar seu pedido, acesse: https://rastreamento.correios.com.br_
                               </div>
                             </div>
                             <p className="text-lg font-semibold text-primary mt-2">
-                              {formatPrice(option.price)}
+                              {subtotal >= 299 ? (
+                                <span className="text-green-600">Grátis</span>
+                              ) : (
+                                formatPrice(option.price)
+                              )}
                             </p>
                           </button>
                         ))}
                       </div>
+                      {subtotal >= 299 && (
+                        <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm text-green-700 font-medium">
+                            Parabéns! Você ganhou frete grátis em compras acima de R$ 299
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <Button type="submit" className="w-full" size="lg" data-testid="button-next-step2">
@@ -642,12 +652,33 @@ _Para acompanhar seu pedido, acesse: https://rastreamento.correios.com.br_
                       disabled={isSubmitting}
                       data-testid="button-finish-order"
                     >
-                      {isSubmitting ? "Processando pagamento..." : "Confirmar e Pagar"}
-                      <ArrowRight className="h-4 w-4 ml-2" />
+                      {isSubmitting ? "Processando pagamento..." : "Pagar com Mercado Pago"}
+                      <CreditCard className="h-4 w-4 ml-2" />
+                    </Button>
+
+                    <div className="relative my-4">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card px-2 text-muted-foreground">ou</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full bg-green-50 border-green-500 text-green-700 hover:bg-green-100"
+                      size="lg"
+                      onClick={handleWhatsAppCheckout}
+                      data-testid="button-whatsapp-checkout"
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Finalizar via WhatsApp
                     </Button>
 
                     <div className="text-center text-xs text-muted-foreground mt-4">
-                      🔒 Pagamento 100% seguro e criptografado
+                      Pagamento seguro via Mercado Pago ou combine pelo WhatsApp
                     </div>
                   </form>
                 </CardContent>
@@ -692,8 +723,15 @@ _Para acompanhar seu pedido, acesse: https://rastreamento.correios.com.br_
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Frete ({shippingMethod})</span>
-                    <span className="text-foreground" data-testid="text-checkout-shipping">{formatPrice(shippingCost)}</span>
+                    {isFreeShipping ? (
+                      <span className="text-green-600 font-medium" data-testid="text-checkout-shipping">Grátis</span>
+                    ) : (
+                      <span className="text-foreground" data-testid="text-checkout-shipping">{formatPrice(shippingCost)}</span>
+                    )}
                   </div>
+                  {isFreeShipping && (
+                    <div className="text-xs text-green-600">Frete grátis em compras acima de R$ 299</div>
+                  )}
                   {discountAmount > 0 && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-green-600">Desconto PIX</span>

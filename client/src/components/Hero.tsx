@@ -65,12 +65,12 @@ export function Hero() {
 
         <div className="mt-12 flex items-center justify-center gap-8 text-white/70 text-sm">
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-white">100+</span>
+            <span className="text-2xl font-bold text-white">60+</span>
             <span>Produtos</span>
           </div>
           <div className="w-px h-8 bg-white/20" />
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-white">5k+</span>
+            <span className="text-2xl font-bold text-white">650+</span>
             <span>Clientes</span>
           </div>
           <div className="w-px h-8 bg-white/20" />

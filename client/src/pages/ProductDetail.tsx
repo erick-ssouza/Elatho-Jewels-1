@@ -11,11 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/context/CartContext";
 import type { Product } from "@shared/schema";
 
-const variations = ["Dourado", "Prateado", "Rosé"];
-
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
-  const [selectedVariation, setSelectedVariation] = useState(variations[0]);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const { toast } = useToast();
@@ -40,14 +37,14 @@ export default function ProductDetail() {
       name: product.name,
       price: product.price,
       image: product.image,
-      variation: selectedVariation,
+      variation: "Único",
       quantity,
     });
 
     setIsAdded(true);
     toast({
       title: "Adicionado ao carrinho",
-      description: `${product.name} (${selectedVariation}) foi adicionado ao seu carrinho.`,
+      description: `${product.name} foi adicionado ao seu carrinho.`,
     });
 
     setTimeout(() => setIsAdded(false), 2000);
@@ -129,26 +126,6 @@ export default function ProductDetail() {
             <p className="text-muted-foreground mb-8 leading-relaxed" data-testid="text-product-description">
               {product.description}
             </p>
-
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold text-foreground mb-3">Variação</h3>
-              <div className="flex flex-wrap gap-2">
-                {variations.map((variation) => (
-                  <button
-                    key={variation}
-                    onClick={() => setSelectedVariation(variation)}
-                    className={`px-6 py-3 rounded-md text-sm font-medium transition-all ${
-                      selectedVariation === variation
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                    data-testid={`button-variation-${variation.toLowerCase()}`}
-                  >
-                    {variation}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="mb-8">
               <h3 className="text-sm font-semibold text-foreground mb-3">Quantidade</h3>

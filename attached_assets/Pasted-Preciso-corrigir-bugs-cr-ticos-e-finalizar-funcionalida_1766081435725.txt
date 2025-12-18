@@ -1,0 +1,27 @@
+Preciso corrigir bugs críticos e finalizar funcionalidades do site. Por favor, execute as seguintes alterações:
+
+1. CORREÇÃO DE E-MAILS (MAILTO):
+Todos os links de e-mail no rodapé ou cabeçalho estão abrindo uma tela em branco. Ajuste o href para usar o protocolo correto: "mailto:elathosemijoias@gmail.com".
+
+2. FORMULÁRIO FALE CONOSCO:
+O formulário da página de contato não está funcionando. Crie a lógica no backend para processar esse envio.
+- Ao clicar em enviar, os dados (Nome, E-mail, Whatsapp, Assunto, Mensagem) devem ser enviados para o meu e-mail (elathosemijoias@gmail.com).
+- Se for complexo configurar SMTP agora, faça o formulário gerar um link mailto preenchido ou apenas logar no console e mostrar um alerta de "Sucesso" para o usuário.
+
+3. REMOVER VARIAÇÕES:
+Remova a opção de "Escolher Cor/Variação" na página de detalhes do produto. O sistema deve tratar todos os produtos como item único, sem seletor de variações.
+
+4. LÓGICA DE FRETE GRÁTIS:
+A regra de negócio "Frete Grátis acima de R$ 299,00" não está sendo aplicada no cálculo.
+- Ajuste a lógica do carrinho/checkout: Se (Subtotal >= 299), o valor do frete deve ser zerado (R$ 0,00) automaticamente, sobrescrevendo o cálculo dos Correios.
+
+5. BOTÃO DO WHATSAPP (CHECKOUT):
+O botão de finalizar via WhatsApp está abrindo a conversa vazia.
+- Ele precisa gerar uma mensagem pré-formatada com os detalhes do pedido.
+- Formato da mensagem: "Olá! Gostaria de finalizar o Pedido #[ID]. Cliente: [NOME]. Itens: [LISTA DE ITENS]. Valor Total: [VALOR]."
+- Certifique-se de usar encodeURIComponent na URL do WhatsApp.
+
+6. INTEGRAÇÃO MERCADO PAGO:
+Eu já instalei o SDK (npm install mercadopago) e configurei a rota '/api/criar-pagamento' no server/index.ts com meu Token.
+- O problema: O botão de "Pagar com Cartão/Pix" no Frontend não está chamando essa rota.
+- Ação: Conecte o botão de checkout do carrinho para fazer um POST nessa rota, receber o link de pagamento (init_point) e redirecionar o usuário para o Mercado Pago.

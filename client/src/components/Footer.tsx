@@ -15,7 +15,11 @@ export function Footer() {
 
   // Função para abrir link externo
   const handleExternalLink = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if (url.startsWith('mailto:')) {
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   return (
@@ -241,7 +245,7 @@ export function Footer() {
             © 2025 Elatho Semijoias - Todos os direitos reservados
           </p>
           <p className="text-white/70 text-sm mt-2">
-            Rio Claro, São Paulo
+            Elatho Semijoias (Gerida por Erica C. M. Bortolin) | CPF: 337.645.358-65 Rio Claro, São Paulo
           </p>
         </div>
       </div>
