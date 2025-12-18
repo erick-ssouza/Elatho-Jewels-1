@@ -1,6 +1,9 @@
+// 🛍️ PRODUCT CARD - COMPACTO E CORRIGIDO
+// Arquivo: client/src/components/ProductCard.tsx
+
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import type { Product } from "@shared/schema";
 
@@ -22,36 +25,58 @@ export function ProductCard({ product }: ProductCardProps) {
       data-testid={`card-product-${product.id}`}
     >
       <CardContent className="p-0">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-muted mb-4">
+        {/* Imagem - COMPACTA (aspect-square ao invés de 4/5) */}
+        <div className="relative aspect-square overflow-hidden rounded-lg bg-muted mb-3">
           <img
-            src={product.image}
-            alt={product.name}
+            src={product.imagem}
+            alt={product.nome}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-          <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+
+          {/* Botão Ver Detalhes - Aparece ao hover */}
+          <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <Link href={`/produto/${product.id}`}>
-              <Button
-                className="w-full bg-white text-foreground hover:bg-white/90 shadow-lg"
-                data-testid={`button-view-product-${product.id}`}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Ver Detalhes
-              </Button>
+              <a onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                <Button
+                  className="w-full bg-white text-foreground hover:bg-white/90 shadow-lg text-sm py-2"
+                  data-testid={`button-view-product-${product.id}`}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Ver Detalhes
+                </Button>
+              </a>
             </Link>
           </div>
+
+          {/* Badge Destaque */}
+          {product.destaque && (
+            <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              TOP
+            </div>
+          )}
         </div>
 
-        <div className="space-y-2">
+        {/* Informações - COMPACTAS */}
+        <div className="space-y-1">
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            {product.category}
+            {product.categoria}
           </span>
-          <h3 className="font-medium text-foreground line-clamp-1" data-testid={`text-product-name-${product.id}`}>
-            {product.name}
+          <h3 
+            className="font-medium text-foreground line-clamp-2 text-sm min-h-[2.5rem]" 
+            data-testid={`text-product-name-${product.id}`}
+          >
+            {product.nome}
           </h3>
-          <p className="text-lg font-semibold text-primary" data-testid={`text-product-price-${product.id}`}>
-            {formatPrice(product.price)}
+          <p 
+            className="text-lg font-semibold text-primary" 
+            data-testid={`text-product-price-${product.id}`}
+          >
+            {formatPrice(product.preco)}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            12x de {formatPrice(product.preco / 12)}
           </p>
         </div>
       </CardContent>

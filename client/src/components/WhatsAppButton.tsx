@@ -2,7 +2,7 @@ import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function WhatsAppButton() {
-  const whatsappNumber = "5511999999999";
+  const whatsappNumber = "5519998229202";
   const message = encodeURIComponent("Olá! Gostaria de saber mais sobre os produtos da Elatho Semijoias.");
   const whatsappLink = `https://wa.me/${whatsappNumber}?text=${message}`;
 

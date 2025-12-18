@@ -1,18 +1,36 @@
+// 🎨 HERO - TONS SUAVES
+// Arquivo: client/src/components/Hero.tsx
+
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
-import logoImage from "@assets/Imagem_do_WhatsApp_de_2025-12-16_à(s)_15.19.26_e3a9e2a9_1765980301733.jpg";
 
 export function Hero() {
   return (
-    <section className="relative min-h-[500px] md:min-h-[600px] flex items-center justify-center overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center"
+    <section 
+      className="relative min-h-[500px] md:min-h-[600px] flex items-center justify-center overflow-hidden"
+      style={{
+        background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.85) 0%, rgba(192, 132, 252, 0.85) 100%)',
+      }}
+    >
+      {/* Fundo com foto de joias */}
+      <div 
+        className="absolute inset-0 opacity-25"
         style={{
-          backgroundImage: `url(${logoImage})`,
+          backgroundImage: 'url(https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1920&q=80)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
+
+      {/* Pattern decorativo sutil */}
+      <div 
+        className="absolute inset-0 opacity-5"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }}
+      />
 
       <div className="relative z-10 text-center px-4 py-16 max-w-3xl mx-auto">
         <div className="mb-6 flex justify-center">
@@ -34,7 +52,7 @@ export function Hero() {
           <Link href="/#produtos">
             <Button
               size="lg"
-              className="bg-primary text-primary-foreground font-semibold px-8"
+              className="bg-white text-pink-600 hover:bg-pink-50 font-semibold px-8"
               data-testid="button-hero-shop"
             >
               Ver Coleção
@@ -69,6 +87,10 @@ export function Hero() {
           </div>
         </div>
       </div>
+
+      {/* Decoração de brilho suave */}
+      <div className="absolute top-10 left-10 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-10 right-10 w-40 h-40 bg-amber-300/5 rounded-full blur-3xl" />
     </section>
   );
 }

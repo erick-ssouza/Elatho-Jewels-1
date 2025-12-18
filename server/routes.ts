@@ -5,15 +5,108 @@ import { createOrderSchema, insertProductSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { z } from "zod";
 import { setupAuth } from "./auth";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
+  // ========================================
+  // 📤 CONFIGURAÇÃO DO UPLOAD DE IMAGENS
+  // ========================================
+
+  // Criar pasta de uploads se não existir
+  const uploadsDir = path.join(process.cwd(), "public", "uploads");
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Configurar Multer para upload
+  const storage_multer = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+      // Nome único: timestamp + nome original
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      const name = path.basename(file.originalname, ext);
+      cb(null, `${name}-${uniqueSuffix}${ext}`);
+    },
+  });
+
+  // Filtro de tipos de arquivo permitidos
+  const fileFilter = (req: any, file: any, cb: any) => {
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Tipo de arquivo não suportado. Use JPG, PNG ou WEBP."));
+    }
+  };
+
+  const upload = multer({
+    storage: storage_multer,
+    fileFilter: fileFilter,
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB máximo
+    },
+  });
+
+  // ========================================
+  // 📤 ROTAS DE UPLOAD
+  // ========================================
+
+  // Upload de imagem
+  app.post("/api/upload", upload.single("image"), (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo enviado" });
+      }
+
+      // URL da imagem
+      const imageUrl = `/uploads/${req.file.filename}`;
+
+      res.json({
+        success: true,
+        url: imageUrl,
+        filename: req.file.filename,
+        size: req.file.size,
+      });
+    } catch (error: any) {
+      console.error("Erro no upload:", error);
+      res.status(500).json({ error: error.message || "Erro ao fazer upload" });
+    }
+  });
+
+  // Deletar imagem
+  app.delete("/api/upload/:filename", (req, res) => {
+    try {
+      const filename = req.params.filename;
+      const filepath = path.join(uploadsDir, filename);
+
+      if (fs.existsSync(filepath)) {
+        fs.unlinkSync(filepath);
+        res.json({ success: true, message: "Imagem deletada" });
+      } else {
+        res.status(404).json({ error: "Imagem não encontrada" });
+      }
+    } catch (error: any) {
+      console.error("Erro ao deletar:", error);
+      res.status(500).json({ error: error.message || "Erro ao deletar imagem" });
+    }
+  });
+
+  // ========================================
+  // 🔽 SUAS ROTAS ORIGINAIS
+  // ========================================
+
   // Setup authentication
   setupAuth(app);
-  
+
   // Seed products and testimonials on startup
   await storage.seedProducts();
   await storage.seedTestimonials();
@@ -147,7 +240,7 @@ export async function registerRoutes(
   app.post("/api/orders", async (req, res) => {
     try {
       const result = createOrderSchema.safeParse(req.body);
-      
+
       if (!result.success) {
         const validationError = fromZodError(result.error);
         return res.status(400).json({ error: validationError.message });
@@ -172,7 +265,7 @@ export async function registerRoutes(
       const statusSchema = z.object({
         status: z.enum(["pending", "processing", "shipped", "delivered"]),
       });
-      
+
       const result = statusSchema.safeParse(req.body);
       if (!result.success) {
         const validationError = fromZodError(result.error);
@@ -227,7 +320,7 @@ export async function registerRoutes(
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Not authenticated" });
     }
-    
+
     try {
       const orders = await storage.getOrdersByUserId(req.user!.id);
       res.json(orders);
@@ -273,13 +366,13 @@ export async function registerRoutes(
   app.post("/api/contact", async (req, res) => {
     try {
       const { name, email, whatsapp, subject, message } = req.body;
-      
+
       if (!name || !email || !whatsapp || !subject || !message) {
         return res.status(400).json({ error: "All fields are required" });
       }
 
       console.log("Contact form submission:", { name, email, whatsapp, subject, message });
-      
+
       res.json({ success: true, message: "Contact form received" });
     } catch (error) {
       console.error("Error processing contact form:", error);
@@ -316,11 +409,11 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id);
       const { response } = req.body;
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid testimonial ID" });
       }
-      
+
       if (!response) {
         return res.status(400).json({ error: "Response is required" });
       }
@@ -329,7 +422,7 @@ export async function registerRoutes(
       if (!updated) {
         return res.status(404).json({ error: "Testimonial not found" });
       }
-      
+
       res.json(updated);
     } catch (error) {
       console.error("Error updating testimonial response:", error);
