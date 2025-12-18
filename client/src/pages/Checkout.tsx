@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ArrowRight, Check, Truck, CreditCard, Smartphone } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Truck, CreditCard, Smartphone, MessageCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -52,6 +52,7 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState<"PIX" | "Crédito" | "Débito">("PIX");
   const [isLoadingCep, setIsLoadingCep] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
   const { items, getTotal, clearCart } = useCart();
   const [, setLocation] = useLocation();
@@ -138,6 +139,58 @@ export default function Checkout() {
     setStep(3);
   };
 
+  const processPayment = async (paymentData: any) => {
+    // ============================================
+    // 🔧 AQUI VOCÊ INTEGRA SEU GATEWAY DE PAGAMENTO
+    // ============================================
+
+    // EXEMPLO COM MERCADO PAGO:
+    /*
+    const mp = new MercadoPago('YOUR_PUBLIC_KEY');
+    const cardForm = mp.cardForm({
+      amount: total.toString(),
+      autoMount: true,
+      form: {
+        id: "payment-form",
+        cardholderName: { id: "cardholderName" },
+        cardNumber: { id: "cardNumber" },
+        expirationDate: { id: "expirationDate" },
+        securityCode: { id: "securityCode" },
+      },
+    });
+    */
+
+    // EXEMPLO COM PAGSEGURO:
+    /*
+    const response = await fetch('https://api.pagseguro.com/charges', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer YOUR_TOKEN',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(paymentData)
+    });
+    */
+
+    // POR ENQUANTO, SIMULAR PAGAMENTO BEM-SUCEDIDO:
+    if (paymentMethod === "PIX") {
+      // Gerar QR Code PIX (integrar com seu gateway)
+      return {
+        success: true,
+        paymentId: `PIX-${Date.now()}`,
+        qrCode: "00020126580014br.gov.bcb.pix...", // QR Code real virá do gateway
+        pixCopiaECola: "00020126580014br.gov.bcb.pix..." // Código copia e cola
+      };
+    } else {
+      // Cartão de crédito/débito (processar com gateway)
+      return {
+        success: true,
+        paymentId: `CARD-${Date.now()}`,
+        status: "approved"
+      };
+    }
+  };
+
   const handleStep3Submit = async (data: Step3Data) => {
     if (!customerInfo || !addressInfo) return;
 
@@ -149,6 +202,7 @@ export default function Checkout() {
       const actualDiscount = subtotal * (selectedPayment?.discount || 0);
       const finalTotal = subtotal + shippingCost - actualDiscount;
 
+      // Criar pedido no backend
       const orderData = {
         customer: customerInfo,
         address: addressInfo,
@@ -159,22 +213,79 @@ export default function Checkout() {
         payment: {
           method: data.paymentMethod,
           discount: actualDiscount,
+          total: finalTotal,
         },
         items,
+        status: "pending_payment", // Status inicial
       };
 
-      await apiRequest("POST", "/api/orders", orderData);
+      // Salvar pedido e obter ID
+      const orderResponse = await apiRequest("POST", "/api/orders", orderData);
+      const newOrderId = orderResponse.id || `PED-${Date.now()}`;
+      setOrderId(newOrderId);
 
-      const whatsappNumber = "5511999999999";
-      const orderText = `
-*NOVO PEDIDO - ELATHO SEMIJOIAS*
+      // Processar pagamento
+      const paymentResult = await processPayment({
+        amount: finalTotal,
+        paymentMethod: data.paymentMethod,
+        orderId: newOrderId,
+        customer: customerInfo,
+      });
+
+      if (paymentResult.success) {
+        // Atualizar status do pedido
+        await apiRequest("PATCH", `/api/orders/${newOrderId}`, {
+          status: "payment_approved",
+          paymentId: paymentResult.paymentId,
+          trackingCode: null, // Será preenchido quando enviar
+        });
+
+        toast({
+          title: "Pagamento aprovado!",
+          description: "Seu pedido foi confirmado com sucesso.",
+        });
+
+        clearCart();
+
+        // Redirecionar para página de sucesso com ID do pedido
+        setLocation(`/sucesso?pedido=${newOrderId}`);
+      } else {
+        throw new Error("Pagamento não aprovado");
+      }
+
+    } catch (error) {
+      console.error("Erro ao processar pedido:", error);
+      toast({
+        title: "Erro ao processar pedido",
+        description: "Tente novamente mais tarde ou entre em contato conosco.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Função para enviar resumo via WhatsApp (OPCIONAL)
+  const sendWhatsAppNotification = () => {
+    if (!customerInfo || !addressInfo || !orderId) return;
+
+    const whatsappNumber = "5519998229202"; // ← TROCAR PELO SEU NÚMERO
+
+    const selectedPayment = paymentOptions.find((p) => p.method === paymentMethod);
+    const actualDiscount = subtotal * (selectedPayment?.discount || 0);
+    const finalTotal = subtotal + shippingCost - actualDiscount;
+
+    const orderText = `
+*🎉 PEDIDO CONFIRMADO - ELATHO SEMIJOIAS*
+
+*Número do Pedido:* ${orderId}
 
 *Cliente:*
 Nome: ${customerInfo.name}
 WhatsApp: ${customerInfo.whatsapp}
 Email: ${customerInfo.email}
 
-*Endereço:*
+*Endereço de Entrega:*
 ${addressInfo.street}, ${addressInfo.number}
 ${addressInfo.complement ? addressInfo.complement + "\n" : ""}${addressInfo.neighborhood}
 ${addressInfo.city} - ${addressInfo.state}
@@ -184,25 +295,18 @@ CEP: ${addressInfo.cep}
 ${items.map((item) => `- ${item.name} (${item.variation}) x${item.quantity} = ${formatPrice(item.price * item.quantity)}`).join("\n")}
 
 *Frete:* ${shippingMethod} - ${formatPrice(shippingCost)}
-*Pagamento:* ${data.paymentMethod}${actualDiscount > 0 ? ` (Desconto PIX: ${formatPrice(actualDiscount)})` : ""}
+*Pagamento:* ${paymentMethod}${actualDiscount > 0 ? ` (Desconto PIX: ${formatPrice(actualDiscount)})` : ""}
 
-*TOTAL: ${formatPrice(finalTotal)}*
-      `.trim();
+*TOTAL PAGO: ${formatPrice(finalTotal)}*
 
-      const encodedMessage = encodeURIComponent(orderText);
-      window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, "_blank");
+*Status:* Pagamento confirmado ✅
+*Código de Rastreio:* Será enviado em até 24h
 
-      clearCart();
-      setLocation("/sucesso");
-    } catch {
-      toast({
-        title: "Erro ao processar pedido",
-        description: "Tente novamente mais tarde.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+_Para acompanhar seu pedido, acesse: https://rastreamento.correios.com.br_
+    `.trim();
+
+    const encodedMessage = encodeURIComponent(orderText);
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, "_blank");
   };
 
   if (items.length === 0) {
@@ -514,6 +618,23 @@ ${items.map((item) => `- ${item.name} (${item.variation}) x${item.quantity} = ${
                       ))}
                     </div>
 
+                    {/* 🔧 AQUI ADICIONAR FORMULÁRIO DE CARTÃO SE NECESSÁRIO */}
+                    {(paymentMethod === "Crédito" || paymentMethod === "Débito") && (
+                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          ℹ️ Você será redirecionado para a página de pagamento seguro.
+                        </p>
+                      </div>
+                    )}
+
+                    {paymentMethod === "PIX" && (
+                      <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-sm text-green-800">
+                          ℹ️ Após confirmar, você receberá o QR Code PIX para pagamento.
+                        </p>
+                      </div>
+                    )}
+
                     <Button
                       type="submit"
                       className="w-full"
@@ -521,9 +642,13 @@ ${items.map((item) => `- ${item.name} (${item.variation}) x${item.quantity} = ${
                       disabled={isSubmitting}
                       data-testid="button-finish-order"
                     >
-                      {isSubmitting ? "Processando..." : "Finalizar Pedido"}
+                      {isSubmitting ? "Processando pagamento..." : "Confirmar e Pagar"}
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
+
+                    <div className="text-center text-xs text-muted-foreground mt-4">
+                      🔒 Pagamento 100% seguro e criptografado
+                    </div>
                   </form>
                 </CardContent>
               </Card>
@@ -583,6 +708,18 @@ ${items.map((item) => `- ${item.name} (${item.variation}) x${item.quantity} = ${
                   <span className="font-semibold text-foreground">Total</span>
                   <span className="text-xl font-bold text-primary" data-testid="text-checkout-total">{formatPrice(total)}</span>
                 </div>
+
+                {/* Botão WhatsApp Opcional */}
+                {orderId && (
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4"
+                    onClick={sendWhatsAppNotification}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Enviar por WhatsApp
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -3,7 +3,7 @@ import { MessageCircle, Instagram, Mail, MapPin } from "lucide-react";
 import logoImage from "@assets/Imagem_do_WhatsApp_de_2025-12-16_à(s)_15.19.26_e3a9e2a9_1765980301733.jpg";
 
 export function Footer() {
-  const whatsappNumber = "5511999999999";
+  const whatsappNumber = "5519998229202";
   const whatsappLink = `https://wa.me/${whatsappNumber}`;
 
   return (
@@ -85,15 +85,15 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Instagram className="h-4 w-4" />
-                <span>@elatho.semijoias</span>
+                <span>@elathosemijoias</span>
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Mail className="h-4 w-4" />
-                <span>contato@elatho.com.br</span>
+                <span>elathosemijoias@gmail.com</span>
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>São Paulo, SP</span>
+                <span>Rio Claro, SP</span>
               </li>
             </ul>
           </div>

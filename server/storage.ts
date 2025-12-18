@@ -35,6 +35,7 @@ export interface IStorage {
   getOrderById(id: number): Promise<Order | undefined>;
   createOrder(order: CreateOrder): Promise<Order>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+  deleteOrder(id: number): Promise<boolean>;
 
   getAdminStats(): Promise<AdminStats>;
   seedProducts(): Promise<void>;
@@ -167,6 +168,11 @@ export class DatabaseStorage implements IStorage {
       .returning();
     if (!order) return undefined;
     return parseOrder(order);
+  }
+
+  async deleteOrder(id: number): Promise<boolean> {
+    const result = await db.delete(orders).where(eq(orders.id, id)).returning();
+    return result.length > 0;
   }
 
   async getAdminStats(): Promise<AdminStats> {

@@ -120,6 +120,20 @@ export default function Admin() {
     },
   });
 
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest('DELETE', `/api/orders/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
+      toast({ title: 'Pedido excluído com sucesso' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao excluir pedido', variant: 'destructive' });
+    },
+  });
+
   const resetProductForm = () => {
     setProductForm({
       name: '',
@@ -176,6 +190,12 @@ export default function Admin() {
   const handleDeleteProduct = (id: number) => {
     if (confirm('Tem certeza que deseja excluir este produto?')) {
       deleteProductMutation.mutate(id);
+    }
+  };
+
+  const handleDeleteOrder = (id: number) => {
+    if (confirm('Tem certeza que deseja excluir este pedido?')) {
+      deleteOrderMutation.mutate(id);
     }
   };
 
@@ -546,13 +566,23 @@ export default function Admin() {
                             </ul>
                           </div>
 
-                          <Button
-                            onClick={() => window.open(`https://wa.me/55${order.customer.whatsapp.replace(/\D/g, '')}`, '_blank')}
-                            className="w-full mt-4 bg-green-600 hover:bg-green-700"
-                            data-testid={`button-contact-${order.id}`}
-                          >
-                            Contatar Cliente no WhatsApp
-                          </Button>
+                          <div className="flex gap-2 mt-4">
+                            <Button
+                              onClick={() => window.open(`https://wa.me/55${order.customer.whatsapp.replace(/\D/g, '')}`, '_blank')}
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                              data-testid={`button-contact-${order.id}`}
+                            >
+                              Contatar no WhatsApp
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleDeleteOrder(order.id)}
+                              data-testid={`button-delete-order-${order.id}`}
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Excluir
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
