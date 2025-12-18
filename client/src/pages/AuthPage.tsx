@@ -176,7 +176,7 @@ export default function AuthPage() {
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-pink-500 to-purple-600 items-center justify-center p-8">
         <div className="text-white text-center max-w-md">
           <Sparkles className="w-16 h-16 mx-auto mb-6" />
-          <h2 className="text-3xl font-serif mb-4">Elatho Jewels</h2>
+          <h2 className="text-3xl font-serif mb-4">Elatho Semijoias</h2>
           <p className="text-lg opacity-90">
             Crie sua conta para acompanhar seus pedidos, salvar seus endereços favoritos e receber ofertas exclusivas.
           </p>

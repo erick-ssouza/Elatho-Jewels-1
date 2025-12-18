@@ -432,7 +432,7 @@ export default function Admin() {
               <Package className="w-10 h-10 text-pink-600" />
             </div>
             <CardTitle className="text-2xl">Painel Admin</CardTitle>
-            <p className="text-muted-foreground">Elatho Jewels</p>
+            <p className="text-muted-foreground">Elatho Semijoias</p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -486,7 +486,7 @@ export default function Admin() {
             <Package className="w-8 h-8 text-pink-600" />
             <div>
               <h1 className="text-xl font-bold">Painel Admin</h1>
-              <p className="text-sm text-muted-foreground">Elatho Jewels</p>
+              <p className="text-sm text-muted-foreground">Elatho Semijoias</p>
             </div>
           </div>
           <Button
