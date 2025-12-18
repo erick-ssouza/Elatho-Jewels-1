@@ -4,11 +4,15 @@ import { storage } from "./storage";
 import { createOrderSchema, insertProductSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { z } from "zod";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  
+  // Setup authentication
+  setupAuth(app);
   
   // Seed products on startup
   await storage.seedProducts();
@@ -214,6 +218,21 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
+  // Get user's orders
+  app.get("/api/my-orders", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    try {
+      const orders = await storage.getOrdersByUserId(req.user!.id);
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching user orders:", error);
+      res.status(500).json({ error: "Failed to fetch orders" });
     }
   });
 

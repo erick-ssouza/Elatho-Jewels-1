@@ -1,13 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X, User } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import logoImage from "@assets/Imagem_do_WhatsApp_de_2025-12-16_à(s)_15.19.26_e3a9e2a9_1765980301733.jpg";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getItemCount } = useCart();
+  const { user } = useAuth();
   const [location] = useLocation();
   const itemCount = getItemCount();
 
@@ -53,7 +55,13 @@ export function Navbar() {
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Link href={user ? "/meus-pedidos" : "/conta"} data-testid="link-account">
+              <Button variant="ghost" size="icon" className="relative">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
+
             <Link href="/carrinho" data-testid="link-cart">
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingBag className="h-5 w-5" />
@@ -102,6 +110,15 @@ export function Navbar() {
                 </div>
               </Link>
             ))}
+            <Link
+              href={user ? "/meus-pedidos" : "/conta"}
+              onClick={() => setIsMenuOpen(false)}
+              data-testid="link-mobile-nav-conta"
+            >
+              <div className="block py-3 px-4 rounded-md text-sm font-medium transition-colors cursor-pointer text-muted-foreground hover:bg-muted hover:text-foreground">
+                {user ? "Meus Pedidos" : "Minha Conta"}
+              </div>
+            </Link>
           </div>
         </div>
       )}

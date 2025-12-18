@@ -1,15 +1,25 @@
 import {
   products,
   orders,
+  users,
   type Product,
   type Order,
   type CreateOrder,
   type AdminStats,
+  type User,
+  type InsertUser,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, sum, sql } from "drizzle-orm";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
+
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
+  sessionStore: session.Store;
+
   getAllProducts(): Promise<Product[]>;
   getProductById(id: number): Promise<Product | undefined>;
   getProductsByCategory(category: string): Promise<Product[]>;
@@ -36,6 +46,11 @@ export interface IStorage {
   createOrder(order: CreateOrder): Promise<Order>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
   deleteOrder(id: number): Promise<boolean>;
+  getOrdersByUserId(userId: number): Promise<Order[]>;
+
+  getUser(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
 
   getAdminStats(): Promise<AdminStats>;
   seedProducts(): Promise<void>;
@@ -71,6 +86,36 @@ function parseOrder(row: typeof orders.$inferSelect): Order {
 }
 
 export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ pool, createTableIfMissing: true });
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async getOrdersByUserId(userId: number): Promise<Order[]> {
+    const result = await db
+      .select()
+      .from(orders)
+      .where(sql`${orders.customer}->>'email' = (SELECT email FROM users WHERE id = ${userId})`)
+      .orderBy(desc(orders.createdAt));
+    return result.map(parseOrder);
+  }
+
   async getAllProducts(): Promise<Product[]> {
     const result = await db.select().from(products);
     return result.map(parseProduct);
