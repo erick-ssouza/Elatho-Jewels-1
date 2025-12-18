@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { createOrderSchema, insertProductSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { z } from "zod";
-import { setupAuth } from "./auth";
+import { setupAuth, requireAdmin } from "./auth";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -60,8 +60,8 @@ export async function registerRoutes(
   // 📤 ROTAS DE UPLOAD
   // ========================================
 
-  // Upload de imagem
-  app.post("/api/upload", upload.single("image"), (req, res) => {
+  // Upload de imagem (admin)
+  app.post("/api/upload", requireAdmin, upload.single("image"), (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "Nenhum arquivo enviado" });
@@ -82,8 +82,8 @@ export async function registerRoutes(
     }
   });
 
-  // Deletar imagem
-  app.delete("/api/upload/:filename", (req, res) => {
+  // Deletar imagem (admin)
+  app.delete("/api/upload/:filename", requireAdmin, (req, res) => {
     try {
       const filename = req.params.filename;
       const filepath = path.join(uploadsDir, filename);
@@ -155,7 +155,7 @@ export async function registerRoutes(
   });
 
   // Create product (admin)
-  app.post("/api/products", async (req, res) => {
+  app.post("/api/products", requireAdmin, async (req, res) => {
     try {
       const result = insertProductSchema.safeParse(req.body);
       if (!result.success) {
@@ -176,7 +176,7 @@ export async function registerRoutes(
   });
 
   // Update product (admin)
-  app.patch("/api/products/:id", async (req, res) => {
+  app.patch("/api/products/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -206,7 +206,7 @@ export async function registerRoutes(
   });
 
   // Delete product (admin)
-  app.delete("/api/products/:id", async (req, res) => {
+  app.delete("/api/products/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -225,8 +225,8 @@ export async function registerRoutes(
     }
   });
 
-  // Get all orders
-  app.get("/api/orders", async (_req, res) => {
+  // Get all orders (admin)
+  app.get("/api/orders", requireAdmin, async (_req, res) => {
     try {
       const orders = await storage.getAllOrders();
       res.json(orders);
@@ -255,7 +255,7 @@ export async function registerRoutes(
   });
 
   // Update order status (admin)
-  app.patch("/api/orders/:id/status", async (req, res) => {
+  app.patch("/api/orders/:id/status", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -285,7 +285,7 @@ export async function registerRoutes(
   });
 
   // Delete order (admin)
-  app.delete("/api/orders/:id", async (req, res) => {
+  app.delete("/api/orders/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -305,7 +305,7 @@ export async function registerRoutes(
   });
 
   // Get admin stats
-  app.get("/api/admin/stats", async (_req, res) => {
+  app.get("/api/admin/stats", requireAdmin, async (_req, res) => {
     try {
       const stats = await storage.getAdminStats();
       res.json(stats);
@@ -331,7 +331,7 @@ export async function registerRoutes(
   });
 
   // Get all users (admin)
-  app.get("/api/admin/users", async (_req, res) => {
+  app.get("/api/admin/users", requireAdmin, async (_req, res) => {
     try {
       const users = await storage.getAllUsers();
       const safeUsers = users.map(({ password, ...user }) => user);
@@ -343,7 +343,7 @@ export async function registerRoutes(
   });
 
   // Delete user (admin)
-  app.delete("/api/admin/users/:id", async (req, res) => {
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -405,7 +405,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/testimonials/:id/response", async (req, res) => {
+  app.patch("/api/testimonials/:id/response", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { response } = req.body;
@@ -430,7 +430,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/testimonials/:id", async (req, res) => {
+  app.delete("/api/testimonials/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {

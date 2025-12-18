@@ -32,16 +32,14 @@ export function ProductCard({ product }: ProductCardProps) {
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
 
           <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <Link href={`/produto/${product.id}`}>
-              <a onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                <Button
-                  className="w-full bg-white text-foreground hover:bg-white/90 shadow-lg text-sm py-2"
-                  data-testid={`button-view-product-${product.id}`}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Ver Detalhes
-                </Button>
-              </a>
+            <Link href={`/produto/${product.id}`} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <Button
+                className="w-full bg-white text-foreground hover:bg-white/90 shadow-lg text-sm py-2"
+                data-testid={`button-view-product-${product.id}`}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Ver Detalhes
+              </Button>
             </Link>
           </div>
         </div>

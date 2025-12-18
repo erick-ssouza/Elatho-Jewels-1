@@ -123,4 +123,50 @@ export function setupAuth(app: Express) {
     const { password: _, ...userWithoutPassword } = req.user as SelectUser;
     res.json(userWithoutPassword);
   });
+
+  // Admin authentication
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Elatho@2025!Admin";
+
+  app.post("/api/admin/login", (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+      // Regenerate session to prevent session fixation
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error("Session regeneration failed:", err);
+          return res.status(500).json({ error: "Erro ao iniciar sessão" });
+        }
+        (req.session as any).isAdmin = true;
+        res.json({ success: true });
+      });
+    } else {
+      res.status(401).json({ error: "Senha incorreta" });
+    }
+  });
+
+  app.post("/api/admin/logout", (req, res) => {
+    // Destroy session completely on logout
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Session destruction failed:", err);
+        return res.status(500).json({ error: "Erro ao encerrar sessão" });
+      }
+      res.clearCookie("connect.sid");
+      res.json({ success: true });
+    });
+  });
+
+  app.get("/api/admin/check", (req, res) => {
+    const isAdmin = (req.session as any)?.isAdmin === true;
+    res.json({ authenticated: isAdmin });
+  });
+}
+
+// Middleware to protect admin routes
+export function requireAdmin(req: any, res: any, next: any) {
+  if ((req.session as any)?.isAdmin === true) {
+    next();
+  } else {
+    res.status(401).json({ error: "Acesso não autorizado" });
+  }
 }

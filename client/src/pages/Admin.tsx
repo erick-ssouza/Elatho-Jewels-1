@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import {
@@ -82,6 +82,23 @@ export default function Admin() {
   });
 
   const { toast } = useToast();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Check if already authenticated on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/admin/check", { credentials: "include" });
+        const data = await res.json();
+        setAuthenticated(data.authenticated);
+      } catch (error) {
+        console.error("Auth check failed:", error);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, []);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<
     Product[]
@@ -128,7 +145,7 @@ export default function Admin() {
   });
 
   const createProductMutation = useMutation({
-    mutationFn: async (data: typeof productForm) => {
+    mutationFn: async (data: { name: string; price: number; category: string; description: string; image: string; variations: string[] }) => {
       await apiRequest("POST", "/api/products", data);
     },
     onSuccess: () => {
@@ -149,7 +166,7 @@ export default function Admin() {
       data,
     }: {
       id: number;
-      data: typeof productForm;
+      data: { name: string; price: number; category: string; description: string; image: string; variations: string[] };
     }) => {
       await apiRequest("PATCH", `/api/products/${id}`, data);
     },
@@ -246,17 +263,35 @@ export default function Admin() {
     setEditingProduct(null);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === "Elatho@2025!Admin") {
-      setAuthenticated(true);
-      setPassword("");
-    } else {
-      toast({ title: "Senha incorreta", variant: "destructive" });
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        setAuthenticated(true);
+        setPassword("");
+      } else {
+        toast({ title: "Senha incorreta", variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Erro ao fazer login", variant: "destructive" });
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
     setAuthenticated(false);
     window.location.href = "/";
   };
