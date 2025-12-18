@@ -1,51 +1,40 @@
 import { Link } from "wouter";
-import { MessageCircle, Instagram, Mail, MapPin } from "lucide-react";
-import logoImage from "@assets/Imagem_do_WhatsApp_de_2025-12-16_à(s)_15.19.26_e3a9e2a9_1765980301733.jpg";
+import { MessageCircle, CreditCard, Smartphone } from "lucide-react";
+import { SiInstagram, SiPix } from "react-icons/si";
 
 export function Footer() {
   const whatsappNumber = "5519998229202";
   const whatsappLink = `https://wa.me/${whatsappNumber}`;
 
   return (
-    <footer className="bg-card border-t border-border">
+    <footer className="bg-gradient-to-r from-pink-500 to-purple-500">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-1">
-            <img
-              src={logoImage}
-              alt="Elatho Semijoias"
-              className="h-12 w-auto object-contain rounded-md mb-4"
-            />
-            <p className="text-muted-foreground text-sm">
-              Elegância que brilha em cada detalhe. Semijoias com design exclusivo e acabamento premium.
-            </p>
-          </div>
-
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Navegação</h4>
+            <h4 className="font-semibold text-white mb-4 text-lg">Navegação</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-home">
                   Início
                 </Link>
               </li>
               <li>
-                <Link href="/?categoria=Colares" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/?categoria=Colares" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-colares">
                   Colares
                 </Link>
               </li>
               <li>
-                <Link href="/?categoria=Brincos" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/?categoria=Brincos" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-brincos">
                   Brincos
                 </Link>
               </li>
               <li>
-                <Link href="/?categoria=Anéis" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/?categoria=Anéis" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-aneis">
                   Anéis
                 </Link>
               </li>
               <li>
-                <Link href="/?categoria=Pulseiras" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/?categoria=Pulseiras" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-pulseiras">
                   Pulseiras
                 </Link>
               </li>
@@ -53,61 +42,104 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Suporte</h4>
+            <h4 className="font-semibold text-white mb-4 text-lg">Institucional</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/carrinho" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Carrinho
+                <Link href="/sobre" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-sobre">
+                  Sobre Nós
                 </Link>
               </li>
               <li>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Fale Conosco
-                </a>
+                <Link href="/trocas" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-trocas">
+                  Trocas e Devoluções
+                </Link>
               </li>
               <li>
-                <span className="text-muted-foreground">Trocas e Devoluções</span>
+                <Link href="/privacidade" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-privacidade">
+                  Política de Privacidade
+                </Link>
               </li>
               <li>
-                <span className="text-muted-foreground">Política de Privacidade</span>
+                <Link href="/cuidados" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-cuidados">
+                  Cuidados com Semijoias
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-faq">
+                  Dúvidas Frequentes
+                </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Contato</h4>
+            <h4 className="font-semibold text-white mb-4 text-lg">Contato</h4>
             <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <MessageCircle className="h-4 w-4" />
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                  WhatsApp
+              <li className="flex items-center gap-2 text-white/80">
+                <MessageCircle className="h-4 w-4 text-white" />
+                <a 
+                  href={whatsappLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-amber-400 transition-colors"
+                  data-testid="link-footer-whatsapp"
+                >
+                  (19) 99822-9202
                 </a>
               </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Instagram className="h-4 w-4" />
-                <span>@elathosemijoias</span>
+              <li className="flex items-center gap-2 text-white/80">
+                <SiInstagram className="h-4 w-4 text-white" />
+                <a 
+                  href="https://instagram.com/elathosemijoias" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-amber-400 transition-colors"
+                  data-testid="link-footer-instagram"
+                >
+                  @elathosemijoias
+                </a>
               </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>elathosemijoias@gmail.com</span>
-              </li>
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span>Rio Claro, SP</span>
+              <li className="flex items-center gap-2 text-white/80">
+                <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                <a 
+                  href="mailto:elathosemijoias@gmail.com"
+                  className="hover:text-amber-400 transition-colors"
+                  data-testid="link-footer-email"
+                >
+                  elathosemijoias@gmail.com
+                </a>
               </li>
             </ul>
           </div>
+
+          <div>
+            <h4 className="font-semibold text-white mb-4 text-lg">Formas de Pagamento</h4>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 bg-white/20 rounded-md px-3 py-2 border border-amber-400/30">
+                <SiPix className="h-5 w-5 text-amber-400" />
+                <span className="text-white text-sm">PIX</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/20 rounded-md px-3 py-2">
+                <CreditCard className="h-5 w-5 text-white" />
+                <span className="text-white text-sm">Crédito</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/20 rounded-md px-3 py-2">
+                <Smartphone className="h-5 w-5 text-white" />
+                <span className="text-white text-sm">Débito</span>
+              </div>
+            </div>
+            <p className="text-white/60 text-xs mt-3">
+              Parcele em até 12x sem juros
+            </p>
+          </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} Elatho Semijoias. Todos os direitos reservados.
+        <div className="mt-12 pt-8 border-t border-white/20 text-center">
+          <p className="text-white/80 text-sm">
+            © 2025 Elatho Semijoias - Todos os direitos reservados
           </p>
-          <div className="flex items-center gap-4">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-6 opacity-60" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 opacity-60" />
-            <img src="https://logospng.org/download/pix/logo-pix-icone-256.png" alt="Pix" className="h-6 opacity-60" />
-          </div>
         </div>
       </div>
     </footer>

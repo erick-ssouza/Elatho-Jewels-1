@@ -14,6 +14,12 @@ import Success from "@/pages/Success";
 import Admin from "@/pages/Admin";
 import AuthPage from "@/pages/AuthPage";
 import MeusPedidos from "@/pages/MeusPedidos";
+import About from "@/pages/About";
+import Returns from "@/pages/Returns";
+import Privacy from "@/pages/Privacy";
+import Care from "@/pages/Care";
+import FAQ from "@/pages/FAQ";
+import Contact from "@/pages/Contact";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,6 +33,12 @@ function Router() {
       <Route path="/conta" component={AuthPage} />
       <ProtectedRoute path="/meus-pedidos" component={MeusPedidos} />
       <Route path="/painel-elatho-2025" component={Admin} />
+      <Route path="/sobre" component={About} />
+      <Route path="/trocas" component={Returns} />
+      <Route path="/privacidade" component={Privacy} />
+      <Route path="/cuidados" component={Care} />
+      <Route path="/faq" component={FAQ} />
+      <Route path="/contato" component={Contact} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,0 +1,409 @@
+# 🤖 PROMPT PARA REPLIT AI - ELATHO SEMIJOIAS
+
+Cole este prompt COMPLETO no Replit AI Agent:
+
+---
+
+Implemente as seguintes melhorias no e-commerce Elatho Semijoias:
+
+## 1. FOOTER COMPLETO
+
+Criar Footer com as seguintes seções:
+
+### Seção "Institucional":
+- Sobre Nós (link para /sobre)
+- Trocas e Devoluções (link para /trocas)
+- Política de Privacidade (link para /privacidade)
+- Cuidados com Semijoias (link para /cuidados)
+- Dúvidas Frequentes (link para /faq)
+
+### Seção "Contato":
+- WhatsApp: (19) 99822-9202 (clicável - abre https://wa.me/5519998229202)
+- Instagram: @elathosemijoias (clicável - abre https://instagram.com/elathosemijoias)
+- Email: elathosemijoias@gmail.com (clicável - abre mailto:)
+
+### Seção "Formas de Pagamento":
+- Ícones: PIX, Cartão de Crédito, Cartão de Débito
+
+### Copyright:
+- Texto: "© 2025 Elatho Semijoias - Todos os direitos reservados"
+
+**Design:**
+- Background: Gradient rosa (#EC4899) para roxo (#A855F7)
+- Texto: Branco
+- Links: Hover com efeito dourado (#FBBF24)
+- Responsivo (3 colunas desktop, empilhado mobile)
+
+---
+
+## 2. NAVBAR (BARRA SUPERIOR)
+
+Modificar Navbar existente:
+
+### Adicionar no lado direito (antes do carrinho):
+1. **Ícone WhatsApp** (clicável - abre https://wa.me/5519998229202)
+2. **Ícone Instagram** (clicável - abre https://instagram.com/elathosemijoias)
+3. **Link "Contato"** (vai para /contato)
+4. **Barra de Pesquisa de Produtos:**
+   - Input com ícone de lupa
+   - Placeholder: "Buscar produtos..."
+   - Busca em tempo real (filtra produtos por nome/categoria)
+   - Dropdown com resultados
+
+### Trocar Logo:
+- **REMOVER:** Logo atual
+- **ADICIONAR:** Texto "Elatho Semijoias" com:
+  - Fonte: Playfair Display ou Cormorant (elegante, serifada)
+  - Cor: Gradient rosa (#EC4899) para roxo (#A855F7)
+  - Tamanho: 24px (desktop), 20px (mobile)
+  - Peso: Bold (700)
+  - Texto legível e elegante
+
+**Obs:** Usar apenas texto, sem imagem
+
+---
+
+## 3. PÁGINAS INSTITUCIONAIS
+
+Criar as seguintes páginas completas:
+
+### A) /sobre - Sobre Nós
+```
+Conteúdo:
+- História da Elatho
+- Missão: "Realçar a beleza de cada mulher com semijoias de alta qualidade"
+- Valores: Qualidade, Elegância, Confiança
+- Equipe (se aplicável)
+- Banner hero com foto
+```
+
+### B) /trocas - Trocas e Devoluções
+```
+Conteúdo:
+- Prazo: 7 dias corridos após recebimento
+- Condições: Produto sem uso, etiqueta, embalagem original
+- Como solicitar: Contatar via WhatsApp
+- Frete de devolução: Cliente paga
+- Reembolso: 7 dias úteis após recebermos
+- Produtos com desconto: Não trocáveis
+```
+
+### C) /privacidade - Política de Privacidade
+```
+Conteúdo:
+- Dados coletados: Nome, email, WhatsApp, endereço
+- Uso dos dados: Processar pedidos, envio, contato
+- Compartilhamento: Não compartilhamos com terceiros
+- Segurança: SSL, dados criptografados
+- Não armazenamos dados de cartão
+- Direitos: LGPD - acesso, correção, exclusão
+- Cookies: Melhorar experiência
+- Contato: elathosemijoias@gmail.com
+```
+
+### D) /cuidados - Cuidados com Semijoias
+```
+Conteúdo (6 cards visuais com ícones):
+
+1. 💧 Limpeza
+   Limpe com água e detergente neutro
+
+2. ⚠️ Evite Atritos
+   Evite atritos com outras superfícies e contato com produtos de limpeza
+
+3. ✨ Perfume e Hidratantes
+   Ao passar perfume e hidratantes, espere secar para colocar a semijoia
+
+4. 🌊 Água
+   Nunca entre no mar, piscinas e até mesmo em duchas ou banhos diários com as peças
+
+5. ☀️ Proteção
+   Guarde longe do sol, calor, umidade e exposição à luz
+
+6. 💪 Exercícios
+   Não utilize as semijoias para fazer exercícios físicos
+
+Design:
+- Grid 3 colunas (desktop), 1 coluna (mobile)
+- Cards brancos com shadow
+- Ícones coloridos (gradient rosa/roxo)
+- Hover: Leve elevação
+```
+
+### E) /faq - Dúvidas Frequentes
+```
+Conteúdo (Accordion/expansível):
+
+1. Quanto tempo demora a entrega?
+   PAC: 8-12 dias úteis | SEDEX: 3-5 dias úteis
+
+2. As semijoias são banhadas a ouro?
+   Sim, banho de ouro 18k de alta qualidade
+
+3. Posso molhar as semijoias?
+   Não recomendamos contato com água
+
+4. Como faço para trocar?
+   Entre em contato via WhatsApp em até 7 dias
+
+5. Qual a garantia?
+   90 dias contra defeitos de fabricação
+
+6. Vocês entregam em todo Brasil?
+   Sim, para todo território nacional
+
+7. Posso pagar no PIX?
+   Sim, com 5% de desconto
+
+8. Como rastreio meu pedido?
+   Código enviado por WhatsApp após postagem
+```
+
+### F) /contato - Contato
+```
+Layout:
+- Formulário de contato:
+  * Nome (obrigatório)
+  * Email (obrigatório)
+  * WhatsApp (obrigatório)
+  * Assunto (obrigatório)
+  * Mensagem (obrigatória)
+  * Botão "Enviar Mensagem"
+
+- Informações laterais:
+  * WhatsApp: (19) 99822-9202
+  * Instagram: @elathosemijoias
+  * Email: elathosemijoias@gmail.com
+  * Horário: Segunda a Sexta, 9h-18h
+
+- Envio do formulário:
+  * POST para /api/contact
+  * Envia email para elathosemijoias@gmail.com
+  * Toast de sucesso/erro
+```
+
+**Design das páginas:**
+- Hero section no topo
+- Conteúdo centralizado (max-width: 800px)
+- Espaçamento generoso
+- Tipografia legível
+- Cores da marca
+
+---
+
+## 4. SEÇÃO DE DEPOIMENTOS
+
+Adicionar na Home, após a seção de produtos:
+
+### Título:
+"O que nossos clientes estão dizendo"
+
+### Grid de Depoimentos (3 colunas desktop, 1 mobile):
+
+Criar componente `Testimonial` com:
+- Foto do cliente (circular, 60x60px)
+- Nome do cliente
+- Avaliação em estrelas (★★★★★) - 1 a 5 estrelas
+- Texto do depoimento (2-3 linhas)
+- Data do depoimento (formato: "15 de Dezembro de 2024")
+
+### Depoimentos exemplo (criar 6):
+
+```javascript
+[
+  {
+    name: "Maria Silva",
+    rating: 5,
+    text: "Apaixonada pelas semijoias! Qualidade impecável e entrega rápida. Já sou cliente fiel!",
+    date: "2024-12-10",
+    avatar: "https://i.pravatar.cc/150?img=1"
+  },
+  {
+    name: "Ana Paula",
+    rating: 5,
+    text: "Colar Lua Crescente é perfeito! Recebo elogios toda vez que uso. Vale cada centavo!",
+    date: "2024-12-08",
+    avatar: "https://i.pravatar.cc/150?img=5"
+  },
+  {
+    name: "Juliana Costa",
+    rating: 5,
+    text: "Primeira compra e já quero mais! Embalagem linda e produto exatamente como nas fotos.",
+    date: "2024-12-05",
+    avatar: "https://i.pravatar.cc/150?img=9"
+  },
+  {
+    name: "Carla Mendes",
+    rating: 4,
+    text: "Muito bonito, brilho incrível! Apenas a entrega demorou um pouco mais que o esperado.",
+    date: "2024-12-03",
+    avatar: "https://i.pravatar.cc/150?img=20"
+  },
+  {
+    name: "Fernanda Lima",
+    rating: 5,
+    text: "Atendimento nota 10! Tiraram todas minhas dúvidas pelo WhatsApp. Super recomendo!",
+    date: "2024-12-01",
+    avatar: "https://i.pravatar.cc/150?img=25"
+  },
+  {
+    name: "Patricia Santos",
+    rating: 5,
+    text: "Brincos lindos e delicados! Qualidade surpreendente pelo preço. Já indiquei para amigas!",
+    date: "2024-11-28",
+    avatar: "https://i.pravatar.cc/150?img=32"
+  }
+]
+```
+
+### Design:
+- Cards brancos com shadow
+- Estrelas douradas (#FBBF24)
+- Hover: Leve elevação
+- Avatar alinhado à esquerda
+- Rating centralizado
+- Data em texto pequeno e cinza
+
+### Funcionalidade:
+- Sistema de carousel/slider (setas esquerda/direita)
+- Auto-rotate a cada 5 segundos
+- Responsivo
+
+---
+
+## 5. SEO BÁSICO
+
+Adicionar em TODAS as páginas:
+
+### Meta Tags no <head>:
+
+**Home:**
+```html
+<title>Elatho Semijoias - Elegância que Brilha | Frete Grátis acima de R$ 200</title>
+<meta name="description" content="Semijoias de alta qualidade com design exclusivo. Banhadas a ouro 18k. Parcele em até 12x sem juros. Entrega para todo Brasil.">
+<meta name="keywords" content="semijoias, joias femininas, colar, brincos, anéis, pulseiras, banhado a ouro">
+```
+
+**Produto:**
+```html
+<title>{nomeProduto} - R$ {preco} | Elatho Semijoias</title>
+<meta name="description" content="{descrição do produto limitada a 150 caracteres}">
+```
+
+**Outras páginas:**
+Seguir o mesmo padrão com título e descrição relevantes
+
+### Adicionar em TODAS as imagens:
+```html
+<img src="..." alt="Descrição clara da imagem">
+```
+
+---
+
+## 6. DADOS ESTRUTURADOS (Schema.org)
+
+Adicionar em cada página de produto:
+
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{nomeProduto}",
+  "image": "{urlImagem}",
+  "description": "{descricaoProduto}",
+  "brand": {
+    "@type": "Brand",
+    "name": "Elatho Semijoias"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{urlProduto}",
+    "priceCurrency": "BRL",
+    "price": "{preco}",
+    "availability": "https://schema.org/InStock",
+    "seller": {
+      "@type": "Organization",
+      "name": "Elatho Semijoias"
+    }
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "reviewCount": "127"
+  }
+}
+</script>
+```
+
+---
+
+## 7. FUNCIONALIDADE DE BUSCA
+
+Implementar sistema de busca na Navbar:
+
+### Lógica:
+1. Input com ícone de lupa
+2. Ao digitar, filtra produtos em tempo real
+3. Mostra dropdown com resultados
+4. Resultado mostra: imagem miniatura, nome, preço
+5. Click no resultado → vai para página do produto
+6. Busca em: nome do produto e categoria
+
+### Código exemplo:
+```typescript
+const [searchTerm, setSearchTerm] = useState('');
+const [searchResults, setSearchResults] = useState([]);
+
+useEffect(() => {
+  if (searchTerm.length > 2) {
+    const results = products.filter(p => 
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setSearchResults(results);
+  } else {
+    setSearchResults([]);
+  }
+}, [searchTerm]);
+```
+
+---
+
+## 8. ROTAS A ADICIONAR NO APP.TSX
+
+```typescript
+<Route path="/sobre" element={<About />} />
+<Route path="/trocas" element={<Returns />} />
+<Route path="/privacidade" element={<Privacy />} />
+<Route path="/cuidados" element={<Care />} />
+<Route path="/faq" element={<FAQ />} />
+<Route path="/contato" element={<Contact />} />
+```
+
+---
+
+## 9. ESTILO GERAL
+
+Manter consistência:
+- Cores: Rosa #EC4899, Roxo #A855F7, Dourado #FBBF24
+- Fonte títulos: Playfair Display ou Cormorant
+- Fonte texto: Inter ou Montserrat
+- Espaçamentos generosos
+- Animações suaves (hover, transitions)
+- Responsivo mobile-first
+
+---
+
+## 10. PRIORIDADES
+
+1. Footer completo ✅
+2. Navbar modificada ✅
+3. Páginas institucionais ✅
+4. Seção de depoimentos ✅
+5. SEO básico ✅
+6. Busca de produtos ✅
+
+---
+
+Implemente TODAS essas melhorias mantendo o código limpo, componentizado e seguindo as melhores práticas do React + TypeScript. Teste todas as funcionalidades antes de finalizar.

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function Success() {
-  const whatsappNumber = "5511999999999";
+  const whatsappNumber = "5519998229202";
   const whatsappLink = `https://wa.me/${whatsappNumber}`;
 
   return (
