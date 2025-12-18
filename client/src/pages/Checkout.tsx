@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, ArrowRight, Check, Truck, CreditCard, Smartphone, MessageCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Truck, CreditCard, Smartphone, MessageCircle, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -33,10 +33,12 @@ type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
 
-const shippingOptions = [
+const defaultShippingOptions = [
   { method: "PAC" as const, name: "PAC", price: 15, days: "8-12 dias úteis" },
   { method: "SEDEX" as const, name: "SEDEX", price: 25, days: "3-5 dias úteis" },
 ];
+
+type ShippingOption = typeof defaultShippingOptions[number];
 
 const paymentOptions = [
   { method: "PIX" as const, name: "PIX", icon: Smartphone, discount: 0.05, description: "5% de desconto" },
@@ -51,6 +53,8 @@ export default function Checkout() {
   const [shippingMethod, setShippingMethod] = useState<"PAC" | "SEDEX">("PAC");
   const [paymentMethod, setPaymentMethod] = useState<"PIX" | "Crédito" | "Débito">("PIX");
   const [isLoadingCep, setIsLoadingCep] = useState(false);
+  const [isLoadingShipping, setIsLoadingShipping] = useState(false);
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>(defaultShippingOptions);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
 
@@ -98,6 +102,64 @@ export default function Checkout() {
   const discountAmount = subtotal * paymentDiscount;
   const total = subtotal + shippingCost - discountAmount;
 
+  const fetchShipping = async (cep: string) => {
+    if (cep.length !== 8) return;
+
+    setIsLoadingShipping(true);
+    try {
+      const response = await fetch('/api/calcular-frete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cepDestino: cep })
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao calcular frete');
+      }
+
+      const data = await response.json();
+      
+      // API retorna array com serviços: SEDEX (04014) e PAC (04510)
+      const updatedOptions: ShippingOption[] = [];
+      
+      for (const servico of data) {
+        if (servico.Codigo === '04510') {
+          // PAC
+          const prazo = parseInt(servico.PrazoEntrega) || 12;
+          const valor = parseFloat(servico.Valor?.replace(',', '.')) || 15;
+          updatedOptions.push({
+            method: "PAC" as const,
+            name: "PAC",
+            price: valor,
+            days: `${prazo}-${prazo + 4} dias úteis`
+          });
+        } else if (servico.Codigo === '04014') {
+          // SEDEX
+          const prazo = parseInt(servico.PrazoEntrega) || 5;
+          const valor = parseFloat(servico.Valor?.replace(',', '.')) || 25;
+          updatedOptions.push({
+            method: "SEDEX" as const,
+            name: "SEDEX",
+            price: valor,
+            days: `${prazo}-${prazo + 2} dias úteis`
+          });
+        }
+      }
+
+      if (updatedOptions.length > 0) {
+        // Ordenar: PAC primeiro, depois SEDEX
+        updatedOptions.sort((a, b) => a.method === 'PAC' ? -1 : 1);
+        setShippingOptions(updatedOptions);
+      }
+    } catch (error) {
+      console.error('Erro ao calcular frete:', error);
+      // Mantém os valores padrão em caso de erro
+      setShippingOptions(defaultShippingOptions);
+    } finally {
+      setIsLoadingShipping(false);
+    }
+  };
+
   const fetchAddress = async (cep: string) => {
     if (cep.length !== 8) return;
 
@@ -119,6 +181,9 @@ export default function Checkout() {
       form2.setValue("neighborhood", data.bairro || "");
       form2.setValue("city", data.localidade || "");
       form2.setValue("state", data.uf || "");
+
+      // Também calcular frete quando encontrar o CEP
+      fetchShipping(cep);
     } catch {
       toast({
         title: "Erro ao buscar CEP",
@@ -542,36 +607,43 @@ ${items.map((item) => `- ${item.name} x${item.quantity} = ${formatPrice(item.pri
 
                     <div>
                       <Label className="mb-3 block">Método de Envio</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {shippingOptions.map((option) => (
-                          <button
-                            key={option.method}
-                            type="button"
-                            onClick={() => form2.setValue("shippingMethod", option.method)}
-                            className={`p-4 rounded-md border-2 text-left transition-all ${
-                              form2.watch("shippingMethod") === option.method
-                                ? "border-primary bg-primary/5"
-                                : "border-border hover:border-muted-foreground"
-                            }`}
-                            data-testid={`button-shipping-${option.method.toLowerCase()}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <Truck className="h-5 w-5 text-muted-foreground" />
-                              <div>
-                                <p className="font-medium text-foreground">{option.name}</p>
-                                <p className="text-sm text-muted-foreground">{option.days}</p>
+                      {isLoadingShipping ? (
+                        <div className="flex items-center justify-center py-8 text-muted-foreground">
+                          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                          <span>Calculando frete...</span>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {shippingOptions.map((option) => (
+                            <button
+                              key={option.method}
+                              type="button"
+                              onClick={() => form2.setValue("shippingMethod", option.method)}
+                              className={`p-4 rounded-md border-2 text-left transition-all ${
+                                form2.watch("shippingMethod") === option.method
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:border-muted-foreground"
+                              }`}
+                              data-testid={`button-shipping-${option.method.toLowerCase()}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <Truck className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                  <p className="font-medium text-foreground">{option.name}</p>
+                                  <p className="text-sm text-muted-foreground">{option.days}</p>
+                                </div>
                               </div>
-                            </div>
-                            <p className="text-lg font-semibold text-primary mt-2">
-                              {subtotal >= 299 ? (
-                                <span className="text-green-600">Grátis</span>
-                              ) : (
-                                formatPrice(option.price)
-                              )}
-                            </p>
-                          </button>
-                        ))}
-                      </div>
+                              <p className="text-lg font-semibold text-primary mt-2">
+                                {subtotal >= 299 ? (
+                                  <span className="text-green-600">Grátis</span>
+                                ) : (
+                                  formatPrice(option.price)
+                                )}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {subtotal >= 299 && (
                         <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                           <p className="text-sm text-green-700 font-medium">
