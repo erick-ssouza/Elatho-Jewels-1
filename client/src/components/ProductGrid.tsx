@@ -32,7 +32,7 @@ export function ProductGrid({ products, isLoading }: ProductGridProps) {
   const filteredProducts =
     activeCategory === "Todos"
       ? products
-      : products.filter((p) => p.categoria === activeCategory);
+      : products.filter((p) => p.category === activeCategory);
 
   if (isLoading) {
     return (
