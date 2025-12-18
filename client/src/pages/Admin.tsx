@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
-import { Package, DollarSign, ShoppingCart, TrendingUp, Plus, Edit2, Trash2, Eye, EyeOff, LogOut, Search, Calendar, X, Save } from 'lucide-react';
-import type { Product, Order, AdminStats } from '@shared/schema';
+import { Package, DollarSign, ShoppingCart, TrendingUp, Plus, Edit2, Trash2, Eye, EyeOff, LogOut, Search, Calendar, X, Save, Users } from 'lucide-react';
+import type { Product, Order, AdminStats, User } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ export default function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'produtos' | 'pedidos'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'produtos' | 'pedidos' | 'clientes'>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [showProductModal, setShowProductModal] = useState(false);
@@ -58,6 +58,11 @@ export default function Admin() {
 
   const { data: stats } = useQuery<AdminStats>({
     queryKey: ['/api/admin/stats'],
+    enabled: authenticated,
+  });
+
+  const { data: customers = [], isLoading: customersLoading } = useQuery<Omit<User, 'password'>[]>({
+    queryKey: ['/api/admin/users'],
     enabled: authenticated,
   });
 
@@ -134,6 +139,19 @@ export default function Admin() {
     },
   });
 
+  const deleteCustomerMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest('DELETE', `/api/admin/users/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({ title: 'Cliente excluído com sucesso' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao excluir cliente', variant: 'destructive' });
+    },
+  });
+
   const resetProductForm = () => {
     setProductForm({
       name: '',
@@ -196,6 +214,12 @@ export default function Admin() {
   const handleDeleteOrder = (id: number) => {
     if (confirm('Tem certeza que deseja excluir este pedido?')) {
       deleteOrderMutation.mutate(id);
+    }
+  };
+
+  const handleDeleteCustomer = (id: number) => {
+    if (confirm('Tem certeza que deseja excluir este cliente?')) {
+      deleteCustomerMutation.mutate(id);
     }
   };
 
@@ -271,7 +295,7 @@ export default function Admin() {
     );
   }
 
-  const isLoading = productsLoading || ordersLoading;
+  const isLoading = productsLoading || ordersLoading || customersLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -294,7 +318,7 @@ export default function Admin() {
       <div className="bg-card border-b">
         <div className="max-w-7xl mx-auto px-4">
           <nav className="flex gap-8 flex-wrap">
-            {(['dashboard', 'produtos', 'pedidos'] as const).map((tab) => (
+            {(['dashboard', 'produtos', 'pedidos', 'clientes'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -587,6 +611,72 @@ export default function Admin() {
                       </Card>
                     ))}
                   </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'clientes' && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <Users className="w-6 h-6 text-pink-600" />
+                  <h2 className="text-2xl font-bold">Clientes Cadastrados</h2>
+                </div>
+
+                {customers.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      Nenhum cliente cadastrado ainda
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Nome</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Email</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">WhatsApp</th>
+                              <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Ações</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {customers.map((customer) => (
+                              <tr key={customer.id} className="border-b hover:bg-muted/50" data-testid={`row-customer-${customer.id}`}>
+                                <td className="px-4 py-3 text-sm font-medium">{customer.name}</td>
+                                <td className="px-4 py-3 text-sm text-muted-foreground">{customer.email}</td>
+                                <td className="px-4 py-3 text-sm text-muted-foreground">{customer.whatsapp || '-'}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <div className="flex justify-end gap-2">
+                                    {customer.whatsapp && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => window.open(`https://wa.me/55${customer.whatsapp?.replace(/\D/g, '')}`, '_blank')}
+                                        data-testid={`button-contact-customer-${customer.id}`}
+                                      >
+                                        WhatsApp
+                                      </Button>
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => handleDeleteCustomer(customer.id)}
+                                      disabled={deleteCustomerMutation.isPending}
+                                      data-testid={`button-delete-customer-${customer.id}`}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
             )}
