@@ -196,7 +196,8 @@ export default function Checkout() {
 
       // Salvar pedido e obter ID
       const orderResponse = await apiRequest("POST", "/api/orders", orderData);
-      const newOrderId = orderResponse.id || `PED-${Date.now()}`;
+      const orderResult = await orderResponse.json();
+      const newOrderId = orderResult.id || `PED-${Date.now()}`;
       setOrderId(newOrderId);
 
       // Redirecionar para Mercado Pago (cartão/PIX)
