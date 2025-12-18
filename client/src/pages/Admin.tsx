@@ -258,6 +258,28 @@ export default function Admin() {
     },
   });
 
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/messages/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/messages"] });
+      toast({ title: "Mensagem excluída com sucesso" });
+    },
+    onError: () => {
+      toast({ title: "Erro ao excluir mensagem", variant: "destructive" });
+    },
+  });
+
+  const markMessageReadMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("PATCH", `/api/admin/messages/${id}/read`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/messages"] });
+    },
+  });
+
   const resetProductForm = () => {
     setProductForm({
       name: "",
@@ -452,28 +474,6 @@ export default function Admin() {
       </div>
     );
   }
-
-  const deleteMessageMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/messages/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/messages"] });
-      toast({ title: "Mensagem excluída com sucesso" });
-    },
-    onError: () => {
-      toast({ title: "Erro ao excluir mensagem", variant: "destructive" });
-    },
-  });
-
-  const markMessageReadMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("PATCH", `/api/admin/messages/${id}/read`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/messages"] });
-    },
-  });
 
   const isLoading =
     productsLoading || ordersLoading || customersLoading || testimonialsLoading || messagesLoading;
