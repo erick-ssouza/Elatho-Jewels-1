@@ -1,62 +1,17 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
-
-const testimonials = [
-  {
-    id: 1,
-    name: "Maria Silva",
-    rating: 5,
-    text: "Apaixonada pelas semijoias! Qualidade impecável e entrega rápida. Já sou cliente fiel!",
-    date: "2024-12-10",
-    avatar: "https://i.pravatar.cc/150?img=1"
-  },
-  {
-    id: 2,
-    name: "Ana Paula",
-    rating: 5,
-    text: "Colar Lua Crescente é perfeito! Recebo elogios toda vez que uso. Vale cada centavo!",
-    date: "2024-12-08",
-    avatar: "https://i.pravatar.cc/150?img=5"
-  },
-  {
-    id: 3,
-    name: "Juliana Costa",
-    rating: 5,
-    text: "Primeira compra e já quero mais! Embalagem linda e produto exatamente como nas fotos.",
-    date: "2024-12-05",
-    avatar: "https://i.pravatar.cc/150?img=9"
-  },
-  {
-    id: 4,
-    name: "Carla Mendes",
-    rating: 4,
-    text: "Muito bonito, brilho incrível! Apenas a entrega demorou um pouco mais que o esperado.",
-    date: "2024-12-03",
-    avatar: "https://i.pravatar.cc/150?img=20"
-  },
-  {
-    id: 5,
-    name: "Fernanda Lima",
-    rating: 5,
-    text: "Atendimento nota 10! Tiraram todas minhas dúvidas pelo WhatsApp. Super recomendo!",
-    date: "2024-12-01",
-    avatar: "https://i.pravatar.cc/150?img=25"
-  },
-  {
-    id: 6,
-    name: "Patricia Santos",
-    rating: 5,
-    text: "Brincos lindos e delicados! Qualidade surpreendente pelo preço. Já indiquei para amigas!",
-    date: "2024-11-28",
-    avatar: "https://i.pravatar.cc/150?img=32"
-  }
-];
+import { ChevronLeft, ChevronRight, Star, Store } from "lucide-react";
+import type { Testimonial } from "@shared/schema";
 
 export function Testimonials() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(3);
+
+  const { data: testimonials = [], isLoading } = useQuery<Testimonial[]>({
+    queryKey: ["/api/testimonials"],
+  });
 
   useEffect(() => {
     const handleResize = () => {
@@ -75,13 +30,36 @@ export function Testimonials() {
   }, []);
 
   useEffect(() => {
+    if (testimonials.length === 0) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => 
         prev + itemsPerPage >= testimonials.length ? 0 : prev + 1
       );
     }, 5000);
     return () => clearInterval(interval);
-  }, [itemsPerPage]);
+  }, [itemsPerPage, testimonials.length]);
+
+  if (isLoading) {
+    return (
+      <section className="py-16 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/3 mx-auto"></div>
+            <div className="h-4 bg-muted rounded w-1/4 mx-auto"></div>
+            <div className="flex gap-6 justify-center mt-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex-1 max-w-sm h-48 bg-muted rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (testimonials.length === 0) {
+    return null;
+  }
 
   const maxIndex = Math.max(0, testimonials.length - itemsPerPage);
 
@@ -93,7 +71,7 @@ export function Testimonials() {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | Date) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("pt-BR", {
       day: "numeric",
@@ -127,11 +105,11 @@ export function Testimonials() {
               >
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <img
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      className="w-14 h-14 rounded-full object-cover"
-                    />
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">
+                        {testimonial.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
                     <div>
                       <h4 className="font-semibold">{testimonial.name}</h4>
                       <div className="flex gap-0.5">
@@ -154,6 +132,23 @@ export function Testimonials() {
                   <p className="text-xs text-muted-foreground">
                     {formatDate(testimonial.date)}
                   </p>
+                  
+                  {testimonial.adminResponse && (
+                    <div className="mt-4 pt-3 border-t border-border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Store className="w-4 h-4 text-pink-500" />
+                        <span className="text-xs font-medium text-pink-600">Resposta da Elatho</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground italic">
+                        "{testimonial.adminResponse}"
+                      </p>
+                      {testimonial.adminResponseDate && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatDate(testimonial.adminResponseDate)}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}

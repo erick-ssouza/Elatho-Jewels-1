@@ -14,8 +14,9 @@ export async function registerRoutes(
   // Setup authentication
   setupAuth(app);
   
-  // Seed products on startup
+  // Seed products and testimonials on startup
   await storage.seedProducts();
+  await storage.seedTestimonials();
 
   // Get all products
   app.get("/api/products", async (_req, res) => {
@@ -283,6 +284,75 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error processing contact form:", error);
       res.status(500).json({ error: "Failed to process contact form" });
+    }
+  });
+
+  // Testimonials routes
+  app.get("/api/testimonials", async (_req, res) => {
+    try {
+      const testimonialsList = await storage.getAllTestimonials();
+      res.json(testimonialsList);
+    } catch (error) {
+      console.error("Error fetching testimonials:", error);
+      res.status(500).json({ error: "Failed to fetch testimonials" });
+    }
+  });
+
+  app.post("/api/testimonials", async (req, res) => {
+    try {
+      const { name, rating, text } = req.body;
+      if (!name || !rating || !text) {
+        return res.status(400).json({ error: "Name, rating, and text are required" });
+      }
+      const testimonial = await storage.createTestimonial({ name, rating: rating.toString(), text });
+      res.status(201).json(testimonial);
+    } catch (error) {
+      console.error("Error creating testimonial:", error);
+      res.status(500).json({ error: "Failed to create testimonial" });
+    }
+  });
+
+  app.patch("/api/testimonials/:id/response", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { response } = req.body;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid testimonial ID" });
+      }
+      
+      if (!response) {
+        return res.status(400).json({ error: "Response is required" });
+      }
+
+      const updated = await storage.updateTestimonialResponse(id, response);
+      if (!updated) {
+        return res.status(404).json({ error: "Testimonial not found" });
+      }
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating testimonial response:", error);
+      res.status(500).json({ error: "Failed to update testimonial response" });
+    }
+  });
+
+  app.delete("/api/testimonials/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid testimonial ID" });
+      }
+
+      const deleted = await storage.deleteTestimonial(id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Testimonial not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting testimonial:", error);
+      res.status(500).json({ error: "Failed to delete testimonial" });
     }
   });
 

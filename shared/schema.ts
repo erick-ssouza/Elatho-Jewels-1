@@ -167,3 +167,28 @@ export const users = pgTable("users", {
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+// Testimonials Table
+export const testimonials = pgTable("testimonials", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  rating: numeric("rating", { precision: 2, scale: 1 }).notNull(),
+  text: text("text").notNull(),
+  date: timestamp("date").notNull().defaultNow(),
+  adminResponse: text("admin_response"),
+  adminResponseDate: timestamp("admin_response_date"),
+});
+
+export const insertTestimonialSchema = createInsertSchema(testimonials).omit({ id: true, date: true, adminResponse: true, adminResponseDate: true });
+export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
+export type TestimonialRow = typeof testimonials.$inferSelect;
+
+export interface Testimonial {
+  id: number;
+  name: string;
+  rating: number;
+  text: string;
+  date: Date;
+  adminResponse: string | null;
+  adminResponseDate: Date | null;
+}

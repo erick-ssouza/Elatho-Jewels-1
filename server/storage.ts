@@ -2,12 +2,15 @@ import {
   products,
   orders,
   users,
+  testimonials,
   type Product,
   type Order,
   type CreateOrder,
   type AdminStats,
   type User,
   type InsertUser,
+  type Testimonial,
+  type InsertTestimonial,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, sum, sql } from "drizzle-orm";
@@ -54,8 +57,14 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   deleteUser(id: number): Promise<boolean>;
 
+  getAllTestimonials(): Promise<Testimonial[]>;
+  createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
+  updateTestimonialResponse(id: number, response: string): Promise<Testimonial | undefined>;
+  deleteTestimonial(id: number): Promise<boolean>;
+
   getAdminStats(): Promise<AdminStats>;
   seedProducts(): Promise<void>;
+  seedTestimonials(): Promise<void>;
 }
 
 function parseProduct(row: typeof products.$inferSelect): Product {
@@ -355,6 +364,95 @@ export class DatabaseStorage implements IStorage {
     ];
 
     await db.insert(products).values(initialProducts);
+  }
+
+  async getAllTestimonials(): Promise<Testimonial[]> {
+    const result = await db.select().from(testimonials).orderBy(desc(testimonials.date));
+    return result.map((row) => ({
+      id: row.id,
+      name: row.name,
+      rating: parseFloat(row.rating ?? "5"),
+      text: row.text,
+      date: row.date,
+      adminResponse: row.adminResponse,
+      adminResponseDate: row.adminResponseDate,
+    }));
+  }
+
+  async createTestimonial(insertTestimonial: InsertTestimonial): Promise<Testimonial> {
+    const [row] = await db.insert(testimonials).values(insertTestimonial).returning();
+    return {
+      id: row.id,
+      name: row.name,
+      rating: parseFloat(row.rating ?? "5"),
+      text: row.text,
+      date: row.date,
+      adminResponse: row.adminResponse,
+      adminResponseDate: row.adminResponseDate,
+    };
+  }
+
+  async updateTestimonialResponse(id: number, response: string): Promise<Testimonial | undefined> {
+    const [row] = await db
+      .update(testimonials)
+      .set({ adminResponse: response, adminResponseDate: new Date() })
+      .where(eq(testimonials.id, id))
+      .returning();
+    if (!row) return undefined;
+    return {
+      id: row.id,
+      name: row.name,
+      rating: parseFloat(row.rating ?? "5"),
+      text: row.text,
+      date: row.date,
+      adminResponse: row.adminResponse,
+      adminResponseDate: row.adminResponseDate,
+    };
+  }
+
+  async deleteTestimonial(id: number): Promise<boolean> {
+    const result = await db.delete(testimonials).where(eq(testimonials.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async seedTestimonials(): Promise<void> {
+    const existing = await db.select().from(testimonials);
+    if (existing.length > 0) return;
+
+    const initialTestimonials = [
+      {
+        name: "Maria Silva",
+        rating: "5",
+        text: "Apaixonada pelas semijoias! Qualidade impecável e entrega rápida. Já sou cliente fiel!",
+      },
+      {
+        name: "Ana Paula",
+        rating: "5",
+        text: "Colar Lua Crescente é perfeito! Recebo elogios toda vez que uso. Vale cada centavo!",
+      },
+      {
+        name: "Juliana Costa",
+        rating: "5",
+        text: "Primeira compra e já quero mais! Embalagem linda e produto exatamente como nas fotos.",
+      },
+      {
+        name: "Carla Mendes",
+        rating: "4",
+        text: "Muito bonito, brilho incrível! Apenas a entrega demorou um pouco mais que o esperado.",
+      },
+      {
+        name: "Fernanda Lima",
+        rating: "5",
+        text: "Atendimento nota 10! Tiraram todas minhas dúvidas pelo WhatsApp. Super recomendo!",
+      },
+      {
+        name: "Patricia Santos",
+        rating: "5",
+        text: "Brincos lindos e delicados! Qualidade surpreendente pelo preço. Já indiquei para amigas!",
+      },
+    ];
+
+    await db.insert(testimonials).values(initialTestimonials);
   }
 }
 

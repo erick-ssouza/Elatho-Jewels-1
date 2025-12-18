@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
-import { Package, DollarSign, ShoppingCart, TrendingUp, Plus, Edit2, Trash2, Eye, EyeOff, LogOut, Search, Calendar, X, Save, Users } from 'lucide-react';
-import type { Product, Order, AdminStats, User } from '@shared/schema';
+import { Package, DollarSign, ShoppingCart, TrendingUp, Plus, Edit2, Trash2, Eye, EyeOff, LogOut, Search, Calendar, X, Save, Users, MessageSquare, Star, Send } from 'lucide-react';
+import type { Product, Order, AdminStats, User, Testimonial } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,8 @@ export default function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'produtos' | 'pedidos' | 'clientes'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'produtos' | 'pedidos' | 'clientes' | 'depoimentos'>('dashboard');
+  const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [showProductModal, setShowProductModal] = useState(false);
@@ -63,6 +64,11 @@ export default function Admin() {
 
   const { data: customers = [], isLoading: customersLoading } = useQuery<Omit<User, 'password'>[]>({
     queryKey: ['/api/admin/users'],
+    enabled: authenticated,
+  });
+
+  const { data: testimonialsList = [], isLoading: testimonialsLoading } = useQuery<Testimonial[]>({
+    queryKey: ['/api/testimonials'],
     enabled: authenticated,
   });
 
@@ -152,6 +158,33 @@ export default function Admin() {
     },
   });
 
+  const deleteTestimonialMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest('DELETE', `/api/testimonials/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/testimonials'] });
+      toast({ title: 'Depoimento excluído com sucesso' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao excluir depoimento', variant: 'destructive' });
+    },
+  });
+
+  const respondTestimonialMutation = useMutation({
+    mutationFn: async ({ id, response }: { id: number; response: string }) => {
+      await apiRequest('PATCH', `/api/testimonials/${id}/response`, { response });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/testimonials'] });
+      setResponseInputs((prev) => ({ ...prev, [variables.id]: '' }));
+      toast({ title: 'Resposta enviada com sucesso' });
+    },
+    onError: () => {
+      toast({ title: 'Erro ao enviar resposta', variant: 'destructive' });
+    },
+  });
+
   const resetProductForm = () => {
     setProductForm({
       name: '',
@@ -220,6 +253,19 @@ export default function Admin() {
   const handleDeleteCustomer = (id: number) => {
     if (confirm('Tem certeza que deseja excluir este cliente?')) {
       deleteCustomerMutation.mutate(id);
+    }
+  };
+
+  const handleDeleteTestimonial = (id: number) => {
+    if (confirm('Tem certeza que deseja excluir este depoimento?')) {
+      deleteTestimonialMutation.mutate(id);
+    }
+  };
+
+  const handleRespondTestimonial = (id: number) => {
+    const response = responseInputs[id];
+    if (response?.trim()) {
+      respondTestimonialMutation.mutate({ id, response: response.trim() });
     }
   };
 
@@ -295,7 +341,7 @@ export default function Admin() {
     );
   }
 
-  const isLoading = productsLoading || ordersLoading || customersLoading;
+  const isLoading = productsLoading || ordersLoading || customersLoading || testimonialsLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -318,7 +364,7 @@ export default function Admin() {
       <div className="bg-card border-b">
         <div className="max-w-7xl mx-auto px-4">
           <nav className="flex gap-8 flex-wrap">
-            {(['dashboard', 'produtos', 'pedidos', 'clientes'] as const).map((tab) => (
+            {(['dashboard', 'produtos', 'pedidos', 'clientes', 'depoimentos'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -677,6 +723,110 @@ export default function Admin() {
                       </div>
                     </CardContent>
                   </Card>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'depoimentos' && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-6 h-6 text-pink-600" />
+                  <h2 className="text-2xl font-bold">Gerenciar Depoimentos</h2>
+                </div>
+                <p className="text-muted-foreground">
+                  Gerencie os depoimentos dos clientes. Você pode excluir comentários inadequados e responder aos clientes.
+                </p>
+
+                {testimonialsList.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center text-muted-foreground">
+                      Nenhum depoimento encontrado
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {testimonialsList.map((testimonial) => (
+                      <Card key={testimonial.id} data-testid={`card-testimonial-${testimonial.id}`}>
+                        <CardContent className="pt-6">
+                          <div className="flex items-start justify-between gap-4 flex-wrap">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
+                                  <span className="text-white font-bold">
+                                    {testimonial.name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold">{testimonial.name}</h4>
+                                  <div className="flex gap-0.5">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-4 h-4 ${
+                                          i < testimonial.rating
+                                            ? "text-amber-400 fill-amber-400"
+                                            : "text-gray-300"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="text-muted-foreground mb-2">"{testimonial.text}"</p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatDate(testimonial.date)}
+                              </p>
+
+                              {testimonial.adminResponse && (
+                                <div className="mt-4 p-3 bg-muted rounded-md">
+                                  <p className="text-xs font-medium text-pink-600 mb-1">Sua resposta:</p>
+                                  <p className="text-sm text-muted-foreground">"{testimonial.adminResponse}"</p>
+                                  {testimonial.adminResponseDate && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {formatDate(testimonial.adminResponseDate)}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteTestimonial(testimonial.id)}
+                              disabled={deleteTestimonialMutation.isPending}
+                              data-testid={`button-delete-testimonial-${testimonial.id}`}
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Excluir
+                            </Button>
+                          </div>
+
+                          {!testimonial.adminResponse && (
+                            <div className="mt-4 pt-4 border-t border-border">
+                              <Label className="text-sm font-medium mb-2 block">Responder ao cliente</Label>
+                              <div className="flex gap-2">
+                                <Textarea
+                                  placeholder="Digite sua resposta..."
+                                  value={responseInputs[testimonial.id] || ''}
+                                  onChange={(e) => setResponseInputs((prev) => ({ ...prev, [testimonial.id]: e.target.value }))}
+                                  className="flex-1"
+                                  rows={2}
+                                  data-testid={`textarea-response-${testimonial.id}`}
+                                />
+                                <Button
+                                  onClick={() => handleRespondTestimonial(testimonial.id)}
+                                  disabled={!responseInputs[testimonial.id]?.trim() || respondTestimonialMutation.isPending}
+                                  data-testid={`button-respond-${testimonial.id}`}
+                                >
+                                  <Send className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
               </div>
             )}
