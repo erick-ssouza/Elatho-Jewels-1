@@ -73,6 +73,22 @@ export function Footer() {
           </div>
 
           <div>
+            <h4 className="font-semibold text-white mb-4 text-lg">Atendimento</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/rastreamento" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-rastreamento">
+                  Rastrear Pedido
+                </Link>
+              </li>
+              <li>
+                <Link href="/contato" className="text-white/80 hover:text-amber-400 transition-colors" data-testid="link-footer-contato">
+                  Fale Conosco
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
             <h4 className="font-semibold text-white mb-4 text-lg">Contato</h4>
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2 text-white/80">

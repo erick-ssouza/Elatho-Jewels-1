@@ -16,6 +16,7 @@ import AuthPage from "@/pages/AuthPage";
 import MeusPedidos from "@/pages/MeusPedidos";
 import About from "@/pages/About";
 import Returns from "@/pages/Returns";
+import Tracking from "@/pages/Tracking";
 import Privacy from "@/pages/Privacy";
 import Care from "@/pages/Care";
 import FAQ from "@/pages/FAQ";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/painel-elatho-2025" component={Admin} />
       <Route path="/sobre" component={About} />
       <Route path="/trocas" component={Returns} />
+      <Route path="/rastreamento" component={Tracking} />
       <Route path="/privacidade" component={Privacy} />
       <Route path="/cuidados" component={Care} />
       <Route path="/faq" component={FAQ} />
