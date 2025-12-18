@@ -3,15 +3,14 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
-// IMPORTAÇÕES NOVAS
+// IMPORTAÇÕES
 import { MercadoPagoConfig, Preference } from 'mercadopago';
-import { calcularPrecoPrazo } from 'correios-brasil';
 
 const app = express();
 const httpServer = createServer(app);
 
 // CONFIGURAÇÃO DO MERCADO PAGO
-// ⚠️ TROQUE PELA SUA ACCESS TOKEN (Do Mercado Pago / Seu Negócio / Credenciais)
+// Seu token de produção
 const client = new MercadoPagoConfig({ accessToken: 'APP_USR-8323393532710222-121813-fd32d80bbabee577c164a00def0672ab-316502627' });
 
 declare module "http" {
@@ -70,50 +69,38 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  
+
   // ========================================
-  // 🚚 ROTA DE CÁLCULO DE FRETE (CORREIOS)
+  // 🚚 ROTA DE FRETE FIXO (ESTRATÉGIA DE LANÇAMENTO)
   // ========================================
+  // Define valores fixos para evitar lentidão dos Correios/Replit
   app.post('/api/calcular-frete', async (req, res) => {
-    const { cepDestino } = req.body;
-    
-    if (!cepDestino) {
-      return res.status(400).json({ message: "CEP de destino é obrigatório" });
-    }
-
-    // Configuração do pacote (300g, caixa pequena)
-    // CEP Origem: Rio Claro (Generico: 13500-000 ou coloque o seu específico da rua)
-    const args = {
-      sCepOrigem: '13500000', 
-      sCepDestino: cepDestino.replace(/\D/g, ''), // Remove traços e pontos
-      nVlPeso: '0.3',
-      nCdFormato: '1', 
-      nVlComprimento: '16',
-      nVlAltura: '4',
-      nVlLargura: '11',
-      nCdServico: ['04014', '04510'], // Sedex e PAC
-      nVlDiametro: '0',
-    };
-
-    try {
-      const response = await calcularPrecoPrazo(args);
-      res.json(response);
-    } catch (error) {
-      console.error("Erro Correios:", error);
-      res.status(500).json({ message: "Erro ao calcular frete" });
-    }
+    // Não importa o CEP, retorna as opções fixas e claras
+    res.json([
+      {
+        Codigo: 'FIXO', 
+        Valor: '14,90', // Valor atrativo para o cliente
+        PrazoEntrega: '7 a 12',
+        Tipo: 'Econômico (Fixo)' 
+      },
+      {
+        Codigo: 'EXPRESSO',
+        Valor: '29,90', // Opção para quem tem pressa
+        PrazoEntrega: '3 a 6',
+        Tipo: 'Rápido (Sedex)'
+      }
+    ]);
   });
 
   // ========================================
   // 💳 ROTA DE PAGAMENTO (MERCADO PAGO)
   // ========================================
   app.post('/api/criar-pagamento', async (req, res) => {
-    const { itens, frete } = req.body; // O frontend deve mandar os itens e valor do frete
+    const { itens, frete } = req.body; 
 
     try {
       const preference = new Preference(client);
-      
-      // Monta a lista de produtos para o MP
+
       const itemsMP = itens.map((item: any) => ({
         id: item.id,
         title: item.nome,
@@ -121,8 +108,8 @@ app.use((req, res, next) => {
         unit_price: Number(item.preco)
       }));
 
-      // Adiciona o frete como um item de "Envio" se houver valor
-      if (frete && frete > 0) {
+      // Adiciona o frete ao total do Mercado Pago
+      if (frete && Number(frete) > 0) {
         itemsMP.push({
           id: 'frete',
           title: 'Frete - Envio',
@@ -135,11 +122,13 @@ app.use((req, res, next) => {
         body: {
           items: itemsMP,
           back_urls: {
-            success: "https://elatho.com.br/sucesso", // Troque pelo seu domínio quando tiver
+            success: "https://elatho.com.br/sucesso", 
             failure: "https://elatho.com.br/",
             pending: "https://elatho.com.br/"
           },
           auto_return: "approved",
+          // O statement_descriptor é o nome que aparece na fatura do cartão
+          statement_descriptor: "ELATHO JOIAS"
         }
       });
 
@@ -150,7 +139,7 @@ app.use((req, res, next) => {
     }
   });
 
-  // Registra as rotas originais (banco de dados, produtos, etc)
+  // Registra as rotas originais (banco de dados, login, produtos)
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -168,8 +157,8 @@ app.use((req, res, next) => {
   }
 
   const port = parseInt(process.env.PORT || "5000", 10);
-  
-  // Tratamento de erro para porta ocupada
+
+  // Tratamento de erro se a porta travar
   httpServer.on('error', (e: any) => {
     if (e.code === 'EADDRINUSE') {
       console.error('⚠️ ATENÇÃO: A porta 5000 está ocupada!');

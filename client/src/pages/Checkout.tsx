@@ -119,29 +119,29 @@ export default function Checkout() {
 
       const data = await response.json();
       
-      // API retorna array com serviços: SEDEX (04014) e PAC (04510)
+      // API retorna: FIXO (econômico/PAC) e EXPRESSO (rápido/SEDEX)
       const updatedOptions: ShippingOption[] = [];
       
       for (const servico of data) {
-        if (servico.Codigo === '04510') {
-          // PAC
-          const prazo = parseInt(servico.PrazoEntrega) || 12;
-          const valor = parseFloat(servico.Valor?.replace(',', '.')) || 15;
+        const valor = parseFloat(servico.Valor?.replace(',', '.')) || 0;
+        // PrazoEntrega pode ser "7 a 12" ou número
+        const prazoStr = servico.PrazoEntrega || "";
+        
+        if (servico.Codigo === 'FIXO' || servico.Codigo === '04510') {
+          // PAC / Econômico
           updatedOptions.push({
             method: "PAC" as const,
             name: "PAC",
             price: valor,
-            days: `${prazo}-${prazo + 4} dias úteis`
+            days: prazoStr.includes('a') ? `${prazoStr} dias úteis` : `${prazoStr}-${parseInt(prazoStr) + 4} dias úteis`
           });
-        } else if (servico.Codigo === '04014') {
-          // SEDEX
-          const prazo = parseInt(servico.PrazoEntrega) || 5;
-          const valor = parseFloat(servico.Valor?.replace(',', '.')) || 25;
+        } else if (servico.Codigo === 'EXPRESSO' || servico.Codigo === '04014') {
+          // SEDEX / Expresso
           updatedOptions.push({
             method: "SEDEX" as const,
             name: "SEDEX",
             price: valor,
-            days: `${prazo}-${prazo + 2} dias úteis`
+            days: prazoStr.includes('a') ? `${prazoStr} dias úteis` : `${prazoStr}-${parseInt(prazoStr) + 2} dias úteis`
           });
         }
       }
