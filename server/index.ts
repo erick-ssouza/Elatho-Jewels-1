@@ -187,3 +187,4 @@ app.use((req, res, next) => {
 })();
 // Versão oficial Vercel
 // Acorda Vercel
+// Agora vai Vercel
