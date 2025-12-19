@@ -1,12 +1,21 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/public",
+  "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/uploads/(.*)", "destination": "/uploads/$1" },
-    { "source": "/(.*)", "destination": "/" }
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/uploads/(.*)",
+      "destination": "/uploads/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ],
   "functions": {
     "api/index.ts": {
@@ -15,9 +24,6 @@
     }
   },
   "env": {
-    "DATABASE_URL": "@database_url",
-    "SESSION_SECRET": "@session_secret",
-    "MERCADOPAGO_ACCESS_TOKEN": "@mercadopago_access_token",
-    "SITE_URL": "@site_url"
+    "NODE_ENV": "production"
   }
 }
