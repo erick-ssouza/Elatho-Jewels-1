@@ -179,3 +179,4 @@ app.use((req, res, next) => {
     },
   );
 })();
+// Versão oficial Vercel
