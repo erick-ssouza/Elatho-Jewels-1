@@ -4,14 +4,16 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
 // IMPORTAÇÕES
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference } from "mercadopago";
 
 const app = express();
 const httpServer = createServer(app);
 
 // CONFIGURAÇÃO DO MERCADO PAGO
-const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || 'APP_USR-8323393532710222-121813-fd32d80bbabee577c164a00def0672ab-316502627' 
+const client = new MercadoPagoConfig({
+  accessToken:
+    process.env.MERCADOPAGO_ACCESS_TOKEN ||
+    "APP_USR-8323393532710222-121813-fd32d80bbabee577c164a00def0672ab-316502627",
 });
 
 declare module "http" {
@@ -32,7 +34,10 @@ app.use(express.urlencoded({ extended: false }));
 // ========================================
 // 📤 SERVIR ARQUIVOS DE UPLOAD
 // ========================================
-app.use('/uploads', express.static(path.join(process.cwd(), 'public', 'uploads')));
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "public", "uploads")),
+);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -70,34 +75,33 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-
   // ========================================
   // 🚚 ROTA DE FRETE FIXO (ESTRATÉGIA DE LANÇAMENTO)
   // ========================================
   // Define valores fixos para evitar lentidão dos Correios/Replit
-  app.post('/api/calcular-frete', async (req, res) => {
+  app.post("/api/calcular-frete", async (req, res) => {
     // Não importa o CEP, retorna as opções fixas e claras
     res.json([
       {
-        Codigo: 'FIXO', 
-        Valor: '14,90', // Valor atrativo para o cliente
-        PrazoEntrega: '7 a 12',
-        Tipo: 'Econômico (Fixo)' 
+        Codigo: "FIXO",
+        Valor: "14,90", // Valor atrativo para o cliente
+        PrazoEntrega: "7 a 12",
+        Tipo: "Econômico (Fixo)",
       },
       {
-        Codigo: 'EXPRESSO',
-        Valor: '29,90', // Opção para quem tem pressa
-        PrazoEntrega: '3 a 6',
-        Tipo: 'Rápido (Sedex)'
-      }
+        Codigo: "EXPRESSO",
+        Valor: "29,90", // Opção para quem tem pressa
+        PrazoEntrega: "3 a 6",
+        Tipo: "Rápido (Sedex)",
+      },
     ]);
   });
 
   // ========================================
   // 💳 ROTA DE PAGAMENTO (MERCADO PAGO)
   // ========================================
-  app.post('/api/criar-pagamento', async (req, res) => {
-    const { itens, frete } = req.body; 
+  app.post("/api/criar-pagamento", async (req, res) => {
+    const { itens, frete } = req.body;
 
     try {
       const preference = new Preference(client);
@@ -106,16 +110,16 @@ app.use((req, res, next) => {
         id: item.id,
         title: item.nome,
         quantity: item.quantidade,
-        unit_price: Number(item.preco)
+        unit_price: Number(item.preco),
       }));
 
       // Adiciona o frete ao total do Mercado Pago
       if (frete && Number(frete) > 0) {
         itemsMP.push({
-          id: 'frete',
-          title: 'Frete - Envio',
+          id: "frete",
+          title: "Frete - Envio",
           quantity: 1,
-          unit_price: Number(frete)
+          unit_price: Number(frete),
         });
       }
 
@@ -123,20 +127,22 @@ app.use((req, res, next) => {
         body: {
           items: itemsMP,
           back_urls: {
-            success: "https://elatho.com.br/sucesso", 
+            success: "https://elatho.com.br/sucesso",
             failure: "https://elatho.com.br/",
-            pending: "https://elatho.com.br/"
+            pending: "https://elatho.com.br/",
           },
           auto_return: "approved",
           // O statement_descriptor é o nome que aparece na fatura do cartão
-          statement_descriptor: "ELATHO JOIAS"
-        }
+          statement_descriptor: "ELATHO JOIAS",
+        },
       });
 
       res.json({ link: response.init_point });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Erro ao criar preferência de pagamento" });
+      res
+        .status(500)
+        .json({ message: "Erro ao criar preferência de pagamento" });
     }
   });
 
@@ -160,10 +166,10 @@ app.use((req, res, next) => {
   const port = parseInt(process.env.PORT || "5000", 10);
 
   // Tratamento de erro se a porta travar
-  httpServer.on('error', (e: any) => {
-    if (e.code === 'EADDRINUSE') {
-      console.error('⚠️ ATENÇÃO: A porta 5000 está ocupada!');
-      console.error('👉 Vá no Shell e digite: kill -9 $(lsof -t -i:5000)');
+  httpServer.on("error", (e: any) => {
+    if (e.code === "EADDRINUSE") {
+      console.error("⚠️ ATENÇÃO: A porta 5000 está ocupada!");
+      console.error("👉 Vá no Shell e digite: kill -9 $(lsof -t -i:5000)");
       process.exit(1);
     }
   });
@@ -180,3 +186,4 @@ app.use((req, res, next) => {
   );
 })();
 // Versão oficial Vercel
+// Acorda Vercel
