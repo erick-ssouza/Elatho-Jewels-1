@@ -10,8 +10,9 @@ const app = express();
 const httpServer = createServer(app);
 
 // CONFIGURAÇÃO DO MERCADO PAGO
-// Seu token de produção
-const client = new MercadoPagoConfig({ accessToken: 'APP_USR-8323393532710222-121813-fd32d80bbabee577c164a00def0672ab-316502627' });
+const client = new MercadoPagoConfig({ 
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || 'APP_USR-8323393532710222-121813-fd32d80bbabee577c164a00def0672ab-316502627' 
+});
 
 declare module "http" {
   interface IncomingMessage {
