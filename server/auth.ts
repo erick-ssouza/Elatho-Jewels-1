@@ -125,7 +125,7 @@ export function setupAuth(app: Express) {
   });
 
   // Admin authentication
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Elatho@2025!Admin";
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin2025";
 
   app.post("/api/admin/login", (req, res) => {
     const { password } = req.body;
