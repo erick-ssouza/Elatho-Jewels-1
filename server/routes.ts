@@ -6,8 +6,7 @@ import { fromZodError } from "zod-validation-error";
 import { z } from "zod";
 import { setupAuth, requireAdmin } from "./auth";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { uploadToCloudinary, deleteFromCloudinary } from "./cloudinary"; // Importe as novas funções
 
 export async function registerRoutes(
   httpServer: Server,
@@ -15,28 +14,11 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   // ========================================
-  // 📤 CONFIGURAÇÃO DO UPLOAD DE IMAGENS
+  // 📤 CONFIGURAÇÃO DO UPLOAD (MEMORY STORAGE)
   // ========================================
 
-  // Criar pasta de uploads se não existir
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-  }
-
-  // Configurar Multer para upload
-  const storage_multer = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, uploadsDir);
-    },
-    filename: function (req, file, cb) {
-      // Nome único: timestamp + nome original
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const ext = path.extname(file.originalname);
-      const name = path.basename(file.originalname, ext);
-      cb(null, `${name}-${uniqueSuffix}${ext}`);
-    },
-  });
+  // Na Vercel, usamos memória RAM, não disco
+  const storage_multer = multer.memoryStorage();
 
   // Filtro de tipos de arquivo permitidos
   const fileFilter = (req: any, file: any, cb: any) => {
@@ -52,30 +34,36 @@ export async function registerRoutes(
     storage: storage_multer,
     fileFilter: fileFilter,
     limits: {
-      fileSize: 5 * 1024 * 1024, // 5MB máximo
+      fileSize: 4.5 * 1024 * 1024, // Reduzi levemente para 4.5MB para garantir margem na Vercel
     },
   });
 
   // ========================================
-  // 📤 ROTAS DE UPLOAD
+  // 📤 ROTAS DE UPLOAD (CLOUDINARY)
   // ========================================
 
   // Upload de imagem (admin)
-  app.post("/api/upload", requireAdmin, upload.single("image"), (req, res) => {
+  app.post("/api/upload", requireAdmin, upload.single("image"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "Nenhum arquivo enviado" });
       }
 
-      // URL da imagem
-      const imageUrl = `/uploads/${req.file.filename}`;
+      console.log(`Iniciando upload para Cloudinary: ${req.file.originalname}`);
+
+      // Envia o buffer do arquivo para o Cloudinary
+      const result = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+
+      console.log("Upload concluído:", result.secure_url);
 
       res.json({
         success: true,
-        url: imageUrl,
-        filename: req.file.filename,
-        size: req.file.size,
+        url: result.secure_url,
+        filename: result.public_id, // Usamos o Public ID do Cloudinary como "filename"
+        size: result.bytes,
+        format: result.format
       });
+
     } catch (error: any) {
       console.error("Erro no upload:", error);
       res.status(500).json({ error: error.message || "Erro ao fazer upload" });
@@ -83,17 +71,18 @@ export async function registerRoutes(
   });
 
   // Deletar imagem (admin)
-  app.delete("/api/upload/:filename", requireAdmin, (req, res) => {
+  app.delete("/api/upload/:id", requireAdmin, async (req, res) => {
     try {
-      const filename = req.params.filename;
-      const filepath = path.join(uploadsDir, filename);
+      const publicId = req.params.id;
 
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath);
-        res.json({ success: true, message: "Imagem deletada" });
-      } else {
-        res.status(404).json({ error: "Imagem não encontrada" });
-      }
+      // Se o ID vier apenas como nome, adicionamos a pasta se necessário, 
+      // mas geralmente o frontend deve enviar o ID completo retornado no upload.
+      console.log(`Deletando imagem do Cloudinary: ${publicId}`);
+
+      await deleteFromCloudinary(publicId);
+
+      res.json({ success: true, message: "Imagem deletada do Cloudinary" });
+
     } catch (error: any) {
       console.error("Erro ao deletar:", error);
       res.status(500).json({ error: error.message || "Erro ao deletar imagem" });
@@ -101,7 +90,7 @@ export async function registerRoutes(
   });
 
   // ========================================
-  // 🔽 SUAS ROTAS ORIGINAIS
+  // 🔽 ROTAS ORIGINAIS (MANTIDAS)
   // ========================================
 
   // Setup authentication
@@ -429,7 +418,7 @@ export async function registerRoutes(
   // Testimonials routes
   app.get("/api/testimonials", async (_req, res) => {
     try {
-      const testimonialsList = await storage.getAllTestimonials();
+      const testimonialsList = await stdorage.getAllTestimonials();
       res.json(testimonialsList);
     } catch (error) {
       console.error("Error fetching testimonials:", error);
