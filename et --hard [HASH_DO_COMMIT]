@@ -1,0 +1,50 @@
+[33m5510c16[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Revert "Temporary frontend auth"
+[33m0375d2e[m Temporary frontend auth
+[33me77fc2e[m fix: deploy express backend via single vercel handler
+[33m576a839[m fix: define builds for api serverless functions
+[33m40d08a9[m fix: corrigir rotas da Vercel para funcionamento da API
+[33m7642eec[m Remove duplicate setupAuth call
+[33m016dd2c[m Add setupAuth call
+[33mae9cda1[m Fix admin authentication
+[33md88a502[m Fix admin password
+[33mb9f4549[m Redeploy with admin password
+[33mf8dac07[m Force redeploy
+[33m036527e[m Redeploy with admin password
+[33mdb494e8[m Redeploy with admin password
+[33mb405c8f[m Fix output directory
+[33m48f90eb[m Add Cloudinary integration
+[33mc201aae[m Trigger deploy
+[33m8c7a560[m Fix output directory
+[33m1cfdd9d[m Start
+[33m94409ad[m Ajuste final
+[33m7e4eed0[m Deploy Final
+[33m8303b25[m[33m ([m[1;31mgitsafe-backup/main[m[33m)[m Adapt application for Vercel deployment
+[33m7280b12[m Update checkout to dynamically calculate shipping costs from backend
+[33m9547514[m Integrate real-time shipping cost calculation into checkout process
+[33m9299542[m Update company name displayed on login and admin pages
+[33m87eaa98[m Update website name and fix user authentication display error
+[33mcaafef5[m Update admin panel to correctly handle message status updates
+[33m90f496d[m Saved progress at the end of the loop
+[33m7e76528[m Update message storage to correctly handle boolean read status
+[33mb63e4f0[m Add a dedicated messages section to the admin panel
+[33m735ec21[m Update checkout process to integrate Mercado Pago and WhatsApp
+[33m1bd9c9c[m Improve Elatho Jewels website with checkout, contact, and product updates
+[33mb9f6eed[m Update home page to make collection button functional and remove unused button
+[33m4ae8d0e[m Saved progress at the end of the loop
+[33m3dcb95e[m Improve admin security and fix product display issues
+[33m827828a[m Fix product display issues on the main page by correcting field names
+[33m8be8017[m Update application to handle image uploads and improve UI
+[33m0c0fb91[m Add tracking and returns pages with navigation and links
+[33m62fd8b6[m Saved progress at the end of the loop
+[33m287d6e6[m Add testimonial management and response capabilities to the admin panel
+[33m60665b8[m Saved progress at the end of the loop
+[33mc052642[m Add new pages and improve website navigation and SEO
+[33m3a38c11[m Add functionality to view and delete registered customers in the admin panel
+[33m8826a54[m Add user authentication and account management features
+[33ma08579c[m Add functionality to delete orders from the admin panel
+[33mfb15d31[m Saved progress at the end of the loop
+[33mc0e566f[m Update admin panel and backend to manage products and orders
+[33m93ae745[m Saved progress at the end of the loop
+[33me9ba917[m Add essential e-commerce features and improve overall user experience
+[33m4688cfc[m Extracted stack files
+[33m537b0f2[m Initial commit
