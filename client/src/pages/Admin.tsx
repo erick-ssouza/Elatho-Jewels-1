@@ -83,23 +83,6 @@ export default function Admin() {
   });
 
   const { toast } = useToast();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-
-  // Check if already authenticated on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch("/api/admin/check", { credentials: "include" });
-        const data = await res.json();
-        setAuthenticated(data.authenticated);
-      } catch (error) {
-        console.error("Auth check failed:", error);
-      } finally {
-        setIsCheckingAuth(false);
-      }
-    };
-    checkAuth();
-  }, []);
 
   const { data: products = [], isLoading: productsLoading } = useQuery<
     Product[]
@@ -292,35 +275,25 @@ export default function Admin() {
     setEditingProduct(null);
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // ========================================
+  // 🔐 FUNÇÃO DE LOGIN CORRIGIDA (FRONTEND AUTH)
+  // ========================================
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ password }),
-      });
-      if (res.ok) {
-        setAuthenticated(true);
-        setPassword("");
-      } else {
-        toast({ title: "Senha incorreta", variant: "destructive" });
-      }
-    } catch (error) {
-      toast({ title: "Erro ao fazer login", variant: "destructive" });
+
+    // Senha hardcoded - autenticação no frontend
+    const ADMIN_PASSWORD = "admin2025";
+
+    if (password === ADMIN_PASSWORD) {
+      setAuthenticated(true);
+      setPassword("");
+      toast({ title: "Acesso liberado! ✅", description: "Bem-vindo ao painel admin" });
+    } else {
+      toast({ title: "Senha incorreta ❌", variant: "destructive" });
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/admin/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+  const handleLogout = () => {
     setAuthenticated(false);
     window.location.href = "/";
   };
@@ -343,13 +316,10 @@ export default function Admin() {
     setShowProductModal(true);
   };
 
-  // ========================================
-  // 🔧 FUNÇÃO CORRIGIDA - CONVERTE PREÇO
-  // ========================================
   const handleSaveProduct = () => {
     const productData = {
       ...productForm,
-      price: parseFloat(productForm.price) || 0, // Converter string para número
+      price: parseFloat(productForm.price) || 0,
     };
 
     if (editingProduct) {
