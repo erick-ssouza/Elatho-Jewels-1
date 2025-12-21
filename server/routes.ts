@@ -8,14 +8,15 @@ import { setupAuth, requireAdmin } from "./auth";
 import multer from "multer";
 import { uploadToCloudinary, deleteFromCloudinary } from "./cloudinary";
 
-// ✅ CORRIGIDO: app primeiro, httpServer depois
 export async function registerRoutes(
   app: Express,
   httpServer: Server
 ): Promise<Server> {
 
+  console.log("🚀 Registrando rotas...");
+
   // ========================================
-  // 📤 CONFIGURAÇÃO DO UPLOAD (MEMORY STORAGE)
+  // 📤 CONFIGURAÇÃO DO UPLOAD
   // ========================================
 
   const storage_multer = multer.memoryStorage();
@@ -38,7 +39,7 @@ export async function registerRoutes(
   });
 
   // ========================================
-  // 📤 ROTA DE UPLOAD COM DEBUG COMPLETO
+  // 📤 ROTA DE UPLOAD
   // ========================================
 
   app.post("/api/upload", requireAdmin, upload.single("image"), async (req, res) => {
@@ -47,7 +48,6 @@ export async function registerRoutes(
       console.log("🔍 DEBUG - Início do upload");
       console.log("========================================");
 
-      // ✅ 1. Verificar se arquivo foi enviado
       if (!req.file) {
         console.error("❌ Nenhum arquivo recebido");
         return res.status(400).json({ 
@@ -61,13 +61,11 @@ export async function registerRoutes(
       console.log("  - Tamanho:", (req.file.size / 1024).toFixed(2), "KB");
       console.log("  - Tipo:", req.file.mimetype);
 
-      // ✅ 2. Verificar configuração do Cloudinary
       console.log("\n🔍 Verificando Cloudinary:");
       console.log("  - Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME || "dddtjacew");
       console.log("  - API Key:", process.env.CLOUDINARY_API_KEY ? "✅ Configurada" : "❌ NÃO CONFIGURADA");
       console.log("  - API Secret:", process.env.CLOUDINARY_API_SECRET ? "✅ Configurada" : "❌ NÃO CONFIGURADA");
 
-      // ✅ 3. Tentar fazer upload
       console.log("\n📤 Iniciando upload para Cloudinary...");
 
       const result = await uploadToCloudinary(req.file.buffer, req.file.originalname);
@@ -94,7 +92,6 @@ export async function registerRoutes(
       console.error("========================================");
       console.error("Mensagem:", error.message);
       console.error("Stack:", error.stack);
-      console.error("Objeto completo:", JSON.stringify(error, null, 2));
       console.error("========================================");
 
       res.status(500).json({ 
@@ -111,7 +108,12 @@ export async function registerRoutes(
     }
   });
 
-  // ✅ Deletar imagem
+  console.log("✅ Rota /api/upload registrada");
+
+  // ========================================
+  // 🗑️ ROTA DE DELETE
+  // ========================================
+
   app.delete("/api/upload/:publicId(*)", requireAdmin, async (req, res) => {
     try {
       const publicId = req.params.publicId;
@@ -143,11 +145,10 @@ export async function registerRoutes(
   });
 
   // ========================================
-  // 🔽 ROTAS ORIGINAIS
+  // 🔽 TODAS AS OUTRAS ROTAS
   // ========================================
 
   setupAuth(app);
-
   await storage.seedProducts();
   await storage.seedTestimonials();
 
@@ -517,6 +518,8 @@ export async function registerRoutes(
       res.status(500).json({ error: "Failed to delete testimonial" });
     }
   });
+
+  console.log("✅ Todas as rotas registradas");
 
   return httpServer;
 }
