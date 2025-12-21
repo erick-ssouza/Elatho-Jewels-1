@@ -19,11 +19,12 @@ export function ImageUpload({ value, onChange, onRemove }: ImageUploadProps) {
   const { toast } = useToast();
 
   const handleFileSelect = async (
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // validações
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "Erro",
@@ -33,44 +34,47 @@ export function ImageUpload({ value, onChange, onRemove }: ImageUploadProps) {
       return;
     }
 
-    const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
+    if (!file.type.startsWith("image/")) {
       toast({
         title: "Erro",
-        description: "Formato inválido",
+        description: "Arquivo inválido",
         variant: "destructive",
       });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => setPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    setPreview(URL.createObjectURL(file));
+    setUploading(true);
 
     try {
-      setUploading(true);
-
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", UPLOAD_PRESET);
 
-      const res = await fetch(
+      const response = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
         {
           method: "POST",
           body: formData,
-        },
+        }
       );
 
-      if (!res.ok) throw new Error("Upload falhou");
+      if (!response.ok) {
+        throw new Error("Erro no upload Cloudinary");
+      }
 
-      const data = await res.json();
+      const data = await response.json();
       onChange(data.secure_url);
 
-      toast({ title: "Upload concluído ✅" });
-    } catch {
       toast({
-        title: "Erro no upload",
+        title: "Sucesso",
+        description: "Imagem enviada com sucesso!",
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Erro",
+        description: "Falha ao enviar imagem",
         variant: "destructive",
       });
       setPreview(null);
@@ -79,53 +83,16 @@ export function ImageUpload({ value, onChange, onRemove }: ImageUploadProps) {
     }
   };
 
+  const handleRemove = () => {
+    setPreview(null);
+    onRemove?.();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <div className="space-y-4">
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileSelect}
-      />
-
-      {preview ? (
-        <div className="relative">
-          <img
-            src={preview}
-            className="rounded-lg border w-full max-w-sm"
-          />
-          <Button
-            size="icon"
-            variant="destructive"
-            className="absolute top-2 right-2"
-            onClick={() => {
-              setPreview(null);
-              onRemove?.();
-            }}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      ) : (
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="border-dashed border-2 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer"
-        >
-          <ImageIcon className="w-10 h-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            Clique para enviar imagem
-          </p>
-        </div>
-      )}
-
-      <Button
-        variant="outline"
-        disabled={uploading}
-        onClick={() => fileInputRef.current?.click()}
-      >
-        {uploading ? "Enviando..." : "Selecionar Imagem"}
-      </Button>
-    </div>
-  );
-}
