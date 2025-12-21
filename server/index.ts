@@ -3,7 +3,6 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
-// IMPORTAÇÕES
 import { MercadoPagoConfig, Preference } from "mercadopago";
 
 const app = express();
@@ -78,19 +77,17 @@ app.use((req, res, next) => {
   // ========================================
   // 🚚 ROTA DE FRETE FIXO (ESTRATÉGIA DE LANÇAMENTO)
   // ========================================
-  // Define valores fixos para evitar lentidão dos Correios/Replit
   app.post("/api/calcular-frete", async (req, res) => {
-    // Não importa o CEP, retorna as opções fixas e claras
     res.json([
       {
         Codigo: "FIXO",
-        Valor: "14,90", // Valor atrativo para o cliente
+        Valor: "14,90",
         PrazoEntrega: "7 a 12",
         Tipo: "Econômico (Fixo)",
       },
       {
         Codigo: "EXPRESSO",
-        Valor: "29,90", // Opção para quem tem pressa
+        Valor: "29,90",
         PrazoEntrega: "3 a 6",
         Tipo: "Rápido (Sedex)",
       },
@@ -113,7 +110,6 @@ app.use((req, res, next) => {
         unit_price: Number(item.preco),
       }));
 
-      // Adiciona o frete ao total do Mercado Pago
       if (frete && Number(frete) > 0) {
         itemsMP.push({
           id: "frete",
@@ -132,7 +128,6 @@ app.use((req, res, next) => {
             pending: "https://elatho.com.br/",
           },
           auto_return: "approved",
-          // O statement_descriptor é o nome que aparece na fatura do cartão
           statement_descriptor: "ELATHO JOIAS",
         },
       });
@@ -140,14 +135,12 @@ app.use((req, res, next) => {
       res.json({ link: response.init_point });
     } catch (error) {
       console.error(error);
-      res
-        .status(500)
-        .json({ message: "Erro ao criar preferência de pagamento" });
+      res.status(500).json({ message: "Erro ao criar preferência de pagamento" });
     }
   });
 
-  // Registra as rotas originais (banco de dados, login, produtos)
-  await registerRoutes(httpServer, app);
+  // ✅ CORRIGIDO: Passa app primeiro, depois httpServer
+  await registerRoutes(app, httpServer);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -165,7 +158,6 @@ app.use((req, res, next) => {
 
   const port = parseInt(process.env.PORT || "5000", 10);
 
-  // Tratamento de erro se a porta travar
   httpServer.on("error", (e: any) => {
     if (e.code === "EADDRINUSE") {
       console.error("⚠️ ATENÇÃO: A porta 5000 está ocupada!");
@@ -185,6 +177,3 @@ app.use((req, res, next) => {
     },
   );
 })();
-// Versão oficial Vercel
-// Acorda Vercel
-// Agora vai Vercel
