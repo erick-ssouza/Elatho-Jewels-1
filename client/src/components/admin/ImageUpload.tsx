@@ -18,70 +18,55 @@ export function ImageUpload({ value, onChange, onRemove }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileSelect = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // validações
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Erro",
-        description: "Imagem muito grande (máx. 5MB)",
-        variant: "destructive",
-      });
+  
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({ title: "Imagem muito grande (máx 5MB)", variant: "destructive" });
       return;
     }
-
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Erro",
-        description: "Arquivo inválido",
-        variant: "destructive",
-      });
+  
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Formato inválido", variant: "destructive" });
       return;
     }
-
-    setPreview(URL.createObjectURL(file));
+  
     setUploading(true);
-
+  
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      formData.append("upload_preset", "elatho_unsigned");
+  
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dddtjacew/image/upload",
         {
           method: "POST",
           body: formData,
         }
       );
-
-      if (!response.ok) {
-        throw new Error("Erro no upload Cloudinary");
-      }
-
-      const data = await response.json();
+  
+      if (!res.ok) throw new Error("Upload falhou");
+  
+      const data = await res.json();
+  
+      setPreview(data.secure_url);
       onChange(data.secure_url);
-
-      toast({
-        title: "Sucesso",
-        description: "Imagem enviada com sucesso!",
-      });
+  
+      toast({ title: "Imagem enviada com sucesso!" });
     } catch (err) {
       console.error(err);
       toast({
-        title: "Erro",
-        description: "Falha ao enviar imagem",
+        title: "Erro ao enviar imagem",
         variant: "destructive",
       });
-      setPreview(null);
     } finally {
       setUploading(false);
     }
-  };
+  };  
 
   const handleRemove = () => {
     setPreview(null);
