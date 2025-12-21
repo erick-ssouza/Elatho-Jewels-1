@@ -1,6 +1,3 @@
-// 📤 COMPONENTE IMAGE UPLOAD
-// Arquivo: client/src/components/admin/ImageUpload.tsx
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
@@ -12,74 +9,68 @@ interface ImageUploadProps {
   onRemove?: () => void;
 }
 
+const CLOUD_NAME = "dddtjacew";
+const UPLOAD_PRESET = "elatho_unsigned";
+
 export function ImageUpload({ value, onChange, onRemove }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validações
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
+    if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "Erro",
-        description: "Imagem muito grande. Máximo 5MB.",
+        description: "Imagem muito grande (máx. 5MB)",
         variant: "destructive",
       });
       return;
     }
 
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
       toast({
         title: "Erro",
-        description: "Formato não suportado. Use JPG, PNG ou WEBP.",
+        description: "Formato inválido",
         variant: "destructive",
       });
       return;
     }
 
-    // Preview local
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result as string);
-    };
+    reader.onloadend = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
 
-    // Upload para servidor
     try {
       setUploading(true);
 
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
-      if (!response.ok) {
-        throw new Error("Erro ao fazer upload");
-      }
+      if (!res.ok) throw new Error("Upload falhou");
 
-      const data = await response.json();
+      const data = await res.json();
+      onChange(data.secure_url);
 
-      // Atualizar URL
-      onChange(data.url);
-
+      toast({ title: "Upload concluído ✅" });
+    } catch {
       toast({
-        title: "Sucesso",
-        description: "Imagem enviada com sucesso!",
-      });
-    } catch (error) {
-      console.error("Erro no upload:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao enviar imagem. Tente novamente.",
+        title: "Erro no upload",
         variant: "destructive",
       });
       setPreview(null);
@@ -88,39 +79,30 @@ export function ImageUpload({ value, onChange, onRemove }: ImageUploadProps) {
     }
   };
 
-  const handleRemove = () => {
-    setPreview(null);
-    if (onRemove) onRemove();
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
   return (
     <div className="space-y-4">
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
-        onChange={handleFileSelect}
+        accept="image/*"
         className="hidden"
+        onChange={handleFileSelect}
       />
 
       {preview ? (
         <div className="relative">
-          <div className="relative aspect-square w-full max-w-sm rounded-lg overflow-hidden border-2 border-border">
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-full h-full object-cover"
-            />
-          </div>
+          <img
+            src={preview}
+            className="rounded-lg border w-full max-w-sm"
+          />
           <Button
-            type="button"
-            variant="destructive"
             size="icon"
+            variant="destructive"
             className="absolute top-2 right-2"
-            onClick={handleRemove}
+            onClick={() => {
+              setPreview(null);
+              onRemove?.();
+            }}
           >
             <X className="w-4 h-4" />
           </Button>
@@ -128,36 +110,21 @@ export function ImageUpload({ value, onChange, onRemove }: ImageUploadProps) {
       ) : (
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="relative aspect-square w-full max-w-sm rounded-lg border-2 border-dashed border-border hover:border-primary transition-colors cursor-pointer bg-muted/50 hover:bg-muted flex flex-col items-center justify-center gap-2"
+          className="border-dashed border-2 rounded-lg h-48 flex flex-col items-center justify-center cursor-pointer"
         >
-          <ImageIcon className="w-12 h-12 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground text-center px-4">
-            Clique para selecionar uma imagem
-          </p>
-          <p className="text-xs text-muted-foreground">
-            JPG, PNG ou WEBP (máx. 5MB)
+          <ImageIcon className="w-10 h-10 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Clique para enviar imagem
           </p>
         </div>
       )}
 
       <Button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={uploading}
         variant="outline"
-        className="w-full max-w-sm"
+        disabled={uploading}
+        onClick={() => fileInputRef.current?.click()}
       >
-        {uploading ? (
-          <>
-            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2" />
-            Enviando...
-          </>
-        ) : (
-          <>
-            <Upload className="w-4 h-4 mr-2" />
-            {preview ? "Trocar Imagem" : "Selecionar Imagem"}
-          </>
-        )}
+        {uploading ? "Enviando..." : "Selecionar Imagem"}
       </Button>
     </div>
   );
